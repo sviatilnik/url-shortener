@@ -30,6 +30,11 @@ func GetShortLinkHandler(shortener *app.Shortener) http.HandlerFunc {
 
 func RedirectToFullLinkHandler(shortener *app.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
 		id := r.PathValue("id")
 
 		fullLink, err := shortener.GetFullLinkByID(id)
