@@ -9,7 +9,7 @@ import (
 
 var storage = make(map[string]string)
 
-func GetLinkById(id string) (string, error) {
+func GetLinkByID(id string) (string, error) {
 	url, ok := storage[id]
 	if !ok {
 		return "", errors.New("not Found")

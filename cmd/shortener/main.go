@@ -14,12 +14,12 @@ func GetShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url, err := io.ReadAll(r.Body)
-	if err != nil || !util.IsUrl(string(url)) {
+	if err != nil || !util.IsURL(string(url)) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	shortId, err := app.GenerateShortLink(string(url))
+	shortID, err := app.GenerateShortLink(string(url))
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -27,7 +27,7 @@ func GetShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte("http://" + r.Host + "/" + shortId))
+	_, err = w.Write([]byte("http://" + r.Host + "/" + shortID))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -42,7 +42,7 @@ func GetFullLinkHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 
-	fullLink, err := app.GetLinkById(id)
+	fullLink, err := app.GetLinkByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
