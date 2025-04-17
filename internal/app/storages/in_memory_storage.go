@@ -1,5 +1,10 @@
 package storages
 
+import (
+	"errors"
+	"strings"
+)
+
 type InMemoryStorage struct {
 	store map[string]string
 }
@@ -11,6 +16,10 @@ func NewInMemoryStorage() URLStorage {
 }
 
 func (i InMemoryStorage) Save(key string, value string) error {
+	if strings.TrimSpace(key) == "" {
+		return errors.New("empty key")
+	}
+
 	i.store[key] = value
 	return nil
 }
