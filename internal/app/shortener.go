@@ -18,7 +18,7 @@ func NewShortener(store storages.URLStorage, generator generators.Generator) *Sh
 	}
 }
 
-func (s *Shortener) GetLinkByID(id string) (string, error) {
+func (s *Shortener) GetFullLinkByID(id string) (string, error) {
 	return s.storage.Get(id)
 }
 
