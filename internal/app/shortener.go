@@ -1,48 +1,52 @@
 package app
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
-	"time"
+	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/storages"
 )
 
-var storage = make(map[string]string)
-
-func GetLinkByID(id string) (string, error) {
-	url, ok := storage[id]
-	if !ok {
-		return "", errors.New("not found")
-	}
-	return url, nil
+type Shortener struct {
+	storage   storages.URLStorage
+	generator generators.Generator
 }
 
-func GenerateShortLink(url string) (string, error) {
-	short := createShortLink(url)
+func NewShortener(store storages.URLStorage, generator generators.Generator) *Shortener {
+	return &Shortener{
+		storage:   store,
+		generator: generator,
+	}
+}
 
+func (s *Shortener) GetLinkByID(id string) (string, error) {
+	return s.storage.Get(id)
+}
+
+func (s *Shortener) GenerateShortLink(url string) (string, error) {
+	var short string
+	var err error
+
+	attemptsLeft := 10
 	for {
-		err := saveLink(short, url)
+		if attemptsLeft <= 0 {
+			break
+		}
+		short, err = s.generator.Get(url)
+		if err != nil {
+			return "", err
+		}
+
+		err = s.storage.Save(short, url)
 		if err == nil {
 			break
 		}
+
+		attemptsLeft--
+	}
+
+	if attemptsLeft <= 0 {
+		return "", errors.New("could not generate short link")
 	}
 
 	return short, nil
-}
-
-func createShortLink(url string) string {
-	hash := md5.Sum([]byte(url + time.Now().String()))
-	short := hex.EncodeToString(hash[:])
-
-	return short[:10]
-}
-
-func saveLink(id, url string) error {
-	_, ok := storage[id]
-	if ok {
-		return errors.New("already exists")
-	}
-
-	storage[id] = url
-	return nil
 }
