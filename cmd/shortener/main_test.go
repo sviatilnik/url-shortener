@@ -57,6 +57,7 @@ func TestGetShortLinkHandler(t *testing.T) {
 			GetShortLinkHandler(w, r)
 
 			resp := w.Result()
+			defer resp.Body.Close()
 
 			assert.Equal(t, test.expectedCode, resp.StatusCode)
 
@@ -112,6 +113,8 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 			RedirectToFullLinkHandler(w, r)
 
 			resp := w.Result()
+			defer resp.Body.Close()
+
 			assert.Equal(t, test.expectedCode, resp.StatusCode)
 			if resp.StatusCode == http.StatusTemporaryRedirect {
 				assert.Equal(t, test.fullLink, resp.Header.Get("Location"))
