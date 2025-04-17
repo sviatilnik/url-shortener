@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
+	"github.com/sviatilnik/url-shortener/internal/app/util"
 )
 
 type Shortener struct {
@@ -23,6 +24,10 @@ func (s *Shortener) GetFullLinkByID(id string) (string, error) {
 }
 
 func (s *Shortener) GenerateShortLink(url string) (string, error) {
+	if !util.IsURL(url) {
+		return "", errors.New("invalid url")
+	}
+
 	var short string
 	var err error
 

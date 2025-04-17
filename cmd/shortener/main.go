@@ -4,7 +4,6 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
-	"github.com/sviatilnik/url-shortener/internal/app/util"
 	"io"
 	"net/http"
 )
@@ -17,7 +16,7 @@ func GetShortLinkHandler(shortener *app.Shortener) http.Handler {
 		}
 
 		url, err := io.ReadAll(r.Body)
-		if err != nil || !util.IsURL(string(url)) {
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -25,7 +24,7 @@ func GetShortLinkHandler(shortener *app.Shortener) http.Handler {
 		shortID, err := shortener.GenerateShortLink(string(url))
 
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
