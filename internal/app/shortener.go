@@ -5,6 +5,7 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"github.com/sviatilnik/url-shortener/internal/app/util"
+	"strings"
 )
 
 type Shortener struct {
@@ -20,6 +21,10 @@ func NewShortener(store storages.URLStorage, generator generators.Generator) *Sh
 }
 
 func (s *Shortener) GetFullLinkByID(id string) (string, error) {
+	if strings.TrimSpace(id) == "" {
+		return "", errors.New("id is required")
+	}
+
 	return s.storage.Get(id)
 }
 
