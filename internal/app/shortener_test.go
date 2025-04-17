@@ -44,6 +44,13 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			id:        "test",
 			wantErr:   true,
 		},
+		{
+			name:      "#4",
+			storage:   storages.NewInMemoryStorage(),
+			generator: generators.NewRandomGenerator(10),
+			id:        " ",
+			wantErr:   true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
