@@ -119,7 +119,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 			}
 			r := httptest.NewRequest(test.method, "/"+test.id, nil)
 			r.SetPathValue("id", test.id)
-			
+
 			handler := RedirectToFullLinkHandler(shortener)
 			handler.ServeHTTP(w, r)
 
@@ -132,4 +132,8 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_getShortener(t *testing.T) {
+	assert.IsType(t, &app.Shortener{}, getTestShortener())
 }
