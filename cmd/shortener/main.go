@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
 	"github.com/sviatilnik/url-shortener/internal/app"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
@@ -9,13 +10,8 @@ import (
 	"net/http"
 )
 
-func GetShortLinkHandler(shortener *app.Shortener) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
+func GetShortLinkHandler(shortener *app.Shortener) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		url, err := io.ReadAll(r.Body)
 		if err != nil || !util.IsURL(string(url)) {
 			w.WriteHeader(http.StatusBadRequest)
@@ -23,28 +19,18 @@ func GetShortLinkHandler(shortener *app.Shortener) http.Handler {
 		}
 
 		shortID, err := shortener.GenerateShortLink(string(url))
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write([]byte("http://" + r.Host + "/" + shortID))
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	})
+		_, _ = w.Write([]byte("http://" + r.Host + "/" + shortID))
+	}
 }
 
-func RedirectToFullLinkHandler(shortener *app.Shortener) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
+func RedirectToFullLinkHandler(shortener *app.Shortener) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 
 		fullLink, err := shortener.GetFullLinkByID(id)
@@ -54,16 +40,17 @@ func RedirectToFullLinkHandler(shortener *app.Shortener) http.Handler {
 		}
 
 		http.Redirect(w, r, fullLink, http.StatusTemporaryRedirect)
-	})
+	}
 }
 
 func main() {
 	shortener := getShortener()
-	mux := http.NewServeMux()
-	mux.Handle("/", GetShortLinkHandler(shortener))
-	mux.Handle("/{id}", RedirectToFullLinkHandler(shortener))
 
-	err := http.ListenAndServe(":8080", mux)
+	r := chi.NewRouter()
+	r.Post("/", GetShortLinkHandler(shortener))
+	r.Get("/{id}", RedirectToFullLinkHandler(shortener))
+
+	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		panic(err)
 	}
