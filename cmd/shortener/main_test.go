@@ -17,6 +17,12 @@ func getTestShortener() *app.Shortener {
 }
 
 func TestGetShortLinkHandler(t *testing.T) {
+
+	handler := GetShortLinkHandler(getTestShortener())
+
+	srv := httptest.NewServer(handler)
+	defer srv.Close()
+
 	testCases := []struct {
 		name         string
 		fullLink     string
@@ -57,13 +63,13 @@ func TestGetShortLinkHandler(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest(test.method, "/", strings.NewReader(test.fullLink))
 
-			handler := GetShortLinkHandler(getTestShortener())
-			handler.ServeHTTP(w, r)
-
-			resp := w.Result()
+			client := &http.Client{}
+			req, _ := http.NewRequest(test.method, srv.URL, strings.NewReader(test.fullLink))
+			resp, err := client.Do(req)
+			if err != nil {
+				assert.NoError(t, err)
+			}
 			defer resp.Body.Close()
 
 			assert.Equal(t, test.expectedCode, resp.StatusCode)
