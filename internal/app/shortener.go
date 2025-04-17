@@ -12,7 +12,7 @@ var storage = make(map[string]string)
 func GetLinkByID(id string) (string, error) {
 	url, ok := storage[id]
 	if !ok {
-		return "", errors.New("not Found")
+		return "", errors.New("not found")
 	}
 	return url, nil
 }
@@ -40,7 +40,7 @@ func createShortLink(url string) string {
 func saveLink(id, url string) error {
 	_, ok := storage[id]
 	if ok {
-		return errors.New("already Exists")
+		return errors.New("already exists")
 	}
 
 	storage[id] = url

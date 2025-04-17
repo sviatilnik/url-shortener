@@ -34,7 +34,7 @@ func GetShortLinkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetFullLinkHandler(w http.ResponseWriter, r *http.Request) {
+func RedirectToFullLinkHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -54,7 +54,7 @@ func GetFullLinkHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", GetShortLinkHandler)
-	mux.HandleFunc("/{id}", GetFullLinkHandler)
+	mux.HandleFunc("/{id}", RedirectToFullLinkHandler)
 
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
