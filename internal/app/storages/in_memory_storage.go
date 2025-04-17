@@ -1,7 +1,5 @@
 package storages
 
-import "errors"
-
 type InMemoryStorage struct {
 	store map[string]string
 }
@@ -21,7 +19,7 @@ func (i InMemoryStorage) Get(key string) (string, error) {
 	_, ok := i.store[key]
 
 	if !ok {
-		return "", errors.New("key not found")
+		return "", ErrURLNotFound
 	}
 
 	return i.store[key], nil
