@@ -31,7 +31,7 @@ func (c *FlagConfig) parseFlags() {
 		_ = c.Set("host", *host)
 	}
 
-	if strings.TrimSpace(*shortURLHost) == "" || !util.IsURL(*shortURLHost) {
+	if strings.TrimSpace(*shortURLHost) != "" && util.IsURL(*shortURLHost) {
 		_ = c.Set("shortURLHost", *shortURLHost)
 	}
 }
