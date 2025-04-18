@@ -56,13 +56,13 @@ func RedirectToFullLinkHandler(shortener *shortener.Shortener) http.HandlerFunc 
 
 func main() {
 	conf := getConfig()
-	shorter := getShortener(conf.Get("shortURLHost", "http://localhost:8080/").(string))
+	shorter := getShortener(conf.Get("shortURLHost").(string))
 
 	r := chi.NewRouter()
 	r.Post("/", GetShortLinkHandler(shorter))
 	r.Get("/{id}", RedirectToFullLinkHandler(shorter))
 
-	host := conf.Get("host", "localhost:8080").(string)
+	host := conf.Get("host").(string)
 
 	err := http.ListenAndServe(host, r)
 	if err != nil {
@@ -78,5 +78,5 @@ func getShortener(baseURL string) *shortener.Shortener {
 }
 
 func getConfig() config.Config {
-	return config.NewFlagConfig()
+	return config.NewFlagConfig(nil)
 }

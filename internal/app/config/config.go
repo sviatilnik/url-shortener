@@ -1,6 +1,6 @@
 package config
 
 type Config interface {
-	Get(key string, defaultValue interface{}) interface{}
+	Get(key string) interface{}
 	Set(key string, value interface{}) error
 }
