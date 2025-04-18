@@ -2,8 +2,9 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sviatilnik/url-shortener/internal/app"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
+	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"io"
 	"net/http"
@@ -12,8 +13,12 @@ import (
 	"testing"
 )
 
-func getTestShortener() *app.Shortener {
-	return app.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10))
+var testBaseUrl string = "http://my-awesome-shotener.com/"
+
+func getTestShortener() *shortener.Shortener {
+	conf := shortenerConfig.NewShortenerConfig()
+	_ = conf.SetURLBase(testBaseUrl)
+	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), conf)
 }
 
 func TestGetShortLinkHandler(t *testing.T) {
@@ -84,11 +89,11 @@ func TestGetShortLinkHandler(t *testing.T) {
 
 func TestRedirectToFullLinkHandler(t *testing.T) {
 
-	shortener := getTestShortener()
+	shorter := getTestShortener()
 
 	testCases := []struct {
 		name         string
-		id           string
+		shortLink    string
 		fullLink     string
 		expectedCode int
 		method       string
@@ -102,7 +107,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 		{
 			name:         "#2",
 			fullLink:     "http://google.com",
-			id:           "1111",
+			shortLink:    testBaseUrl + "1111",
 			expectedCode: http.StatusBadRequest,
 			method:       http.MethodGet,
 		},
@@ -117,16 +122,16 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			if test.id == "" {
-				short, err := shortener.GenerateShortLink(test.fullLink)
+			if test.shortLink == "" {
+				short, err := shorter.GenerateShortLink(test.fullLink)
 				assert.NoError(t, err)
-				test.id = short
-				assert.NotEmpty(t, test.id)
+				test.shortLink = short
+				assert.NotEmpty(t, test.shortLink)
 			}
-			r := httptest.NewRequest(test.method, "/"+test.id, nil)
-			r.SetPathValue("id", test.id)
+			r := httptest.NewRequest(test.method, test.shortLink, nil)
+			r.SetPathValue("id", strings.Replace(test.shortLink, testBaseUrl, "", 1))
 
-			handler := RedirectToFullLinkHandler(shortener)
+			handler := RedirectToFullLinkHandler(shorter)
 			handler.ServeHTTP(w, r)
 
 			resp := w.Result()
@@ -141,5 +146,5 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 }
 
 func Test_getShortener(t *testing.T) {
-	assert.IsType(t, &app.Shortener{}, getTestShortener())
+	assert.IsType(t, &shortener.Shortener{}, getTestShortener())
 }

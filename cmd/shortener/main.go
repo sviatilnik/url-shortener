@@ -1,15 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/sviatilnik/url-shortener/internal/app"
+	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
+	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"io"
 	"net/http"
 )
 
-func GetShortLinkHandler(shortener *app.Shortener) http.HandlerFunc {
+func GetShortLinkHandler(shortener *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -22,18 +25,18 @@ func GetShortLinkHandler(shortener *app.Shortener) http.HandlerFunc {
 			return
 		}
 
-		shortID, err := shortener.GenerateShortLink(string(url))
+		shortLink, err := shortener.GenerateShortLink(string(url))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		_, _ = w.Write([]byte("http://" + r.Host + "/" + shortID))
+		_, _ = w.Write([]byte(shortLink))
 	}
 }
 
-func RedirectToFullLinkHandler(shortener *app.Shortener) http.HandlerFunc {
+func RedirectToFullLinkHandler(shortener *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -53,18 +56,30 @@ func RedirectToFullLinkHandler(shortener *app.Shortener) http.HandlerFunc {
 }
 
 func main() {
-	shortener := getShortener()
+	conf := getConfig()
+
+	shorter := getShortener(conf.Get("host", "http://localhost:8000/").(string))
+	port := conf.Get("port", "8080").(string)
 
 	r := chi.NewRouter()
-	r.Post("/", GetShortLinkHandler(shortener))
-	r.Get("/{id}", RedirectToFullLinkHandler(shortener))
+	r.Post("/", GetShortLinkHandler(shorter))
+	r.Get("/{id}", RedirectToFullLinkHandler(shorter))
 
-	err := http.ListenAndServe(":8080", r)
+	fmt.Println("Listening on port " + port)
+
+	err := http.ListenAndServe(":"+port, r)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func getShortener() *app.Shortener {
-	return app.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10))
+func getShortener(baseUrl string) *shortener.Shortener {
+	conf := shortenerConfig.NewShortenerConfig()
+	_ = conf.SetURLBase(baseUrl)
+
+	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), conf)
+}
+
+func getConfig() config.Config {
+	return config.NewFlagConfig()
 }

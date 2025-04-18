@@ -1,8 +1,9 @@
-package app
+package shortener
 
 import (
 	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"github.com/sviatilnik/url-shortener/internal/app/util"
 	"strings"
@@ -11,12 +12,14 @@ import (
 type Shortener struct {
 	storage   storages.URLStorage
 	generator generators.Generator
+	conf      config.ShortenerConfig
 }
 
-func NewShortener(store storages.URLStorage, generator generators.Generator) *Shortener {
+func NewShortener(store storages.URLStorage, generator generators.Generator, conf config.ShortenerConfig) *Shortener {
 	return &Shortener{
 		storage:   store,
 		generator: generator,
+		conf:      conf,
 	}
 }
 
@@ -58,5 +61,8 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		return "", errors.New("could not generate short link")
 	}
 
-	return short, nil
+	urlBase := s.conf.GetParamValue("urlBase", "http://localhost/").(string)
+	urlBase = strings.TrimRight(urlBase, "/")
+
+	return urlBase + "/" + short, nil
 }
