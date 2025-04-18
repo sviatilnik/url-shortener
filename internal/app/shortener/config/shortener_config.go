@@ -42,10 +42,10 @@ func (c ShortenerConfig) GetParam(key string) (params.ShortenerConfigParam, erro
 	return value, nil
 }
 
-func (c ShortenerConfig) GetParamValue(key string, default_value interface{}) interface{} {
+func (c ShortenerConfig) GetParamValue(key string, defaultValue interface{}) interface{} {
 	param, err := c.GetParam(key)
 	if err != nil || !param.Validate() {
-		return default_value
+		return defaultValue
 	}
 
 	return param.Value()

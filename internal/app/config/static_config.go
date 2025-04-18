@@ -19,11 +19,11 @@ func NewStaticConfig(store map[string]interface{}) StaticConfig {
 	}
 }
 
-func (s StaticConfig) Get(key string, default_value interface{}) interface{} {
+func (s StaticConfig) Get(key string, defaultValue interface{}) interface{} {
 	if v, ok := s.store[key]; ok {
 		return v
 	}
-	return default_value
+	return defaultValue
 }
 
 func (s StaticConfig) Set(key string, value interface{}) error {

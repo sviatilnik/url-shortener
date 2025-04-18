@@ -72,9 +72,9 @@ func main() {
 	}
 }
 
-func getShortener(baseUrl string) *shortener.Shortener {
+func getShortener(baseURL string) *shortener.Shortener {
 	conf := shortenerConfig.NewShortenerConfig()
-	_ = conf.SetURLBase(baseUrl)
+	_ = conf.SetURLBase(baseURL)
 
 	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), conf)
 }

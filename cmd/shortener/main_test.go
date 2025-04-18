@@ -13,11 +13,11 @@ import (
 	"testing"
 )
 
-var testBaseUrl string = "http://my-awesome-shotener.com/"
+var testBaseURL string = "http://my-awesome-shotener.com/"
 
 func getTestShortener() *shortener.Shortener {
 	conf := shortenerConfig.NewShortenerConfig()
-	_ = conf.SetURLBase(testBaseUrl)
+	_ = conf.SetURLBase(testBaseURL)
 	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), conf)
 }
 
@@ -107,7 +107,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 		{
 			name:         "#2",
 			fullLink:     "http://google.com",
-			shortLink:    testBaseUrl + "1111",
+			shortLink:    testBaseURL + "1111",
 			expectedCode: http.StatusBadRequest,
 			method:       http.MethodGet,
 		},
@@ -129,7 +129,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 				assert.NotEmpty(t, test.shortLink)
 			}
 			r := httptest.NewRequest(test.method, test.shortLink, nil)
-			r.SetPathValue("id", strings.Replace(test.shortLink, testBaseUrl, "", 1))
+			r.SetPathValue("id", strings.Replace(test.shortLink, testBaseURL, "", 1))
 
 			handler := RedirectToFullLinkHandler(shorter)
 			handler.ServeHTTP(w, r)
