@@ -21,8 +21,8 @@ func NewFlagConfig() Config {
 }
 
 func (c *FlagConfig) parseFlags() {
-	port := flag.String("a", "8000", "Адрес запуска HTTP-сервера")
-	host := flag.String("b", "http://localhost:8000", "Базовый адрес результирующего сокращённого URL")
+	port := flag.String("a", "8080", "Адрес запуска HTTP-сервера")
+	host := flag.String("b", "http://localhost:8080", "Базовый адрес результирующего сокращённого URL")
 	flag.Parse()
 
 	if strings.TrimSpace(*port) == "" {
