@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"github.com/sviatilnik/url-shortener/internal/app/util"
-	"strconv"
 	"strings"
 )
 
@@ -21,22 +20,18 @@ func NewFlagConfig() Config {
 }
 
 func (c *FlagConfig) parseFlags() {
-	port := flag.String("a", "8080", "Адрес запуска HTTP-сервера")
-	host := flag.String("b", "http://localhost:8080", "Базовый адрес результирующего сокращённого URL")
+	host := flag.String("a", "http://localhost:8080", "Адрес запуска HTTP-сервера")
+	shortUrlHost := flag.String("b", "http://localhost:8080", "Базовый адрес результирующего сокращённого URL")
 	flag.Parse()
 
-	if strings.TrimSpace(*port) == "" {
-		*port = "8000"
-	}
-	if _, err := strconv.Atoi(*port); err != nil {
-		*port = "8000"
-	}
-	*port = strings.TrimLeft(*port, ":")
-
-	if strings.TrimSpace(*host) == "" || !util.IsURL(*host) {
-		*host = "http://localhost:8000"
+	if strings.TrimSpace(*host) == "" {
+		*host = "localhost:8080"
 	}
 
-	_ = c.Set("port", *port)
+	if strings.TrimSpace(*shortUrlHost) == "" || !util.IsURL(*shortUrlHost) {
+		*shortUrlHost = "http://localhost:8080"
+	}
+
 	_ = c.Set("host", *host)
+	_ = c.Set("shortUrlHost", *shortUrlHost)
 }
