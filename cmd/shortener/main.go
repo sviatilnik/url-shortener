@@ -56,7 +56,7 @@ func RedirectToFullLinkHandler(shortener *shortener.Shortener) http.HandlerFunc 
 
 func main() {
 	conf := getConfig()
-	shorter := getShortener(conf.Get("shortUrlHost", "http://localhost:8080/").(string))
+	shorter := getShortener(conf.Get("shortURLHost", "http://localhost:8080/").(string))
 
 	r := chi.NewRouter()
 	r.Post("/", GetShortLinkHandler(shorter))
