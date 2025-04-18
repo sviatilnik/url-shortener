@@ -57,14 +57,13 @@ func RedirectToFullLinkHandler(shortener *shortener.Shortener) http.HandlerFunc 
 
 func main() {
 	conf := getConfig()
-
 	shorter := getShortener(conf.Get("host", "http://localhost:8000/").(string))
-	port := conf.Get("port", "8080").(string)
 
 	r := chi.NewRouter()
 	r.Post("/", GetShortLinkHandler(shorter))
 	r.Get("/{id}", RedirectToFullLinkHandler(shorter))
 
+	port := conf.Get("port", "8080").(string)
 	fmt.Println("Listening on port " + port)
 
 	err := http.ListenAndServe(":"+port, r)
