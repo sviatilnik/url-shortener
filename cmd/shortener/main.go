@@ -78,5 +78,5 @@ func getShortener(baseURL string) *shortener.Shortener {
 }
 
 func getConfig() config.Config {
-	return config.NewFlagConfig(nil)
+	return config.NewEnvConfig(config.NewFlagConfig(nil))
 }
