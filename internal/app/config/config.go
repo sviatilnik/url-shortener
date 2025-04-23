@@ -5,7 +5,7 @@ type Config struct {
 	ShortURLHost string
 }
 
-func NewConfig(providers ...ConfigProvider) Config {
+func NewConfig(providers ...Provider) Config {
 	conf := Config{}
 	for _, provider := range providers {
 		_ = conf.setValues(provider)
@@ -14,6 +14,6 @@ func NewConfig(providers ...ConfigProvider) Config {
 	return conf
 }
 
-func (c *Config) setValues(provider ConfigProvider) error {
+func (c *Config) setValues(provider Provider) error {
 	return provider.setValues(c)
 }

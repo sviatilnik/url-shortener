@@ -1,5 +1,5 @@
 package config
 
-type ConfigProvider interface {
+type Provider interface {
 	setValues(c *Config) error
 }
