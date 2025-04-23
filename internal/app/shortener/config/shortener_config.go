@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener/params"
 	"strings"
 )
@@ -19,7 +18,7 @@ func NewShortenerConfig() ShortenerConfig {
 func (c ShortenerConfig) SetURLBase(urlBase string) error {
 	urlParam := params.NewURLConfigParam(urlBase)
 	if !urlParam.Validate() {
-		return errors.New("invalid url")
+		return ErrInvalidURL
 	}
 
 	return c.SetParam("urlBase", urlParam)
@@ -27,7 +26,7 @@ func (c ShortenerConfig) SetURLBase(urlBase string) error {
 
 func (c ShortenerConfig) SetParam(key string, value params.ShortenerConfigParam) error {
 	if strings.TrimSpace(key) == "" {
-		return errors.New("key must not be blank")
+		return ErrKeyIsEmpty
 	}
 
 	c.params[key] = value
@@ -37,7 +36,7 @@ func (c ShortenerConfig) SetParam(key string, value params.ShortenerConfigParam)
 func (c ShortenerConfig) GetParam(key string) (params.ShortenerConfigParam, error) {
 	value, ok := c.params[key]
 	if !ok {
-		return nil, errors.New("key not found")
+		return nil, ErrKeyNotFound
 	}
 	return value, nil
 }

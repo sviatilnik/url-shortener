@@ -3,7 +3,6 @@ package generators
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"strings"
 )
 
@@ -19,7 +18,7 @@ func NewHashGenerator(len uint) *HashGenerator {
 
 func (g *HashGenerator) Get(str string) (string, error) {
 	if strings.TrimSpace(str) == "" {
-		return "", errors.New("empty str")
+		return "", ErrEmptyString
 	}
 
 	hash := md5.Sum([]byte(str))

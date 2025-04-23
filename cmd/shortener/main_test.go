@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/handlers"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
@@ -23,7 +24,7 @@ func getTestShortener() *shortener.Shortener {
 
 func TestGetShortLinkHandler(t *testing.T) {
 
-	handler := GetShortLinkHandler(getTestShortener())
+	handler := handlers.GetShortLinkHandler(getTestShortener())
 
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
@@ -131,7 +132,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 			r := httptest.NewRequest(test.method, test.shortLink, nil)
 			r.SetPathValue("id", strings.Replace(test.shortLink, testBaseURL, "", 1))
 
-			handler := RedirectToFullLinkHandler(shorter)
+			handler := handlers.RedirectToFullLinkHandler(shorter)
 			handler.ServeHTTP(w, r)
 
 			resp := w.Result()

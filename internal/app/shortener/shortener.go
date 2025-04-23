@@ -1,7 +1,6 @@
 package shortener
 
 import (
-	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
@@ -25,7 +24,7 @@ func NewShortener(store storages.URLStorage, generator generators.Generator, con
 
 func (s *Shortener) GetFullLinkByID(id string) (string, error) {
 	if strings.TrimSpace(id) == "" {
-		return "", errors.New("id is required")
+		return "", ErrIDIsRequired
 	}
 
 	return s.storage.Get(id)
@@ -33,7 +32,7 @@ func (s *Shortener) GetFullLinkByID(id string) (string, error) {
 
 func (s *Shortener) GenerateShortLink(url string) (string, error) {
 	if !util.IsURL(url) {
-		return "", errors.New("invalid url")
+		return "", ErrInvalidURL
 	}
 
 	var short string
@@ -58,7 +57,7 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 	}
 
 	if attemptsLeft <= 0 {
-		return "", errors.New("could not generate short link")
+		return "", ErrCreateShortLink
 	}
 
 	urlBase := s.conf.GetParamValue("urlBase", "http://localhost/").(string)

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"errors"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"strings"
 )
 
@@ -29,7 +29,7 @@ func (s *DefaultConfig) Get(key string) interface{} {
 
 func (s *DefaultConfig) Set(key string, value interface{}) error {
 	if strings.TrimSpace(key) == "" {
-		return errors.New("key is empty")
+		return shortener.ErrKeyIsEmpty
 	}
 	s.store[key] = value
 	return nil

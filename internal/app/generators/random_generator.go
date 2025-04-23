@@ -1,7 +1,6 @@
 package generators
 
 import (
-	"errors"
 	"math/rand"
 	"strings"
 	"time"
@@ -19,7 +18,7 @@ func NewRandomGenerator(len uint) *RandomGenerator {
 
 func (r RandomGenerator) Get(str string) (string, error) {
 	if strings.TrimSpace(str) == "" {
-		return "", errors.New("empty str")
+		return "", ErrEmptyString
 	}
 
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
