@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-type EnvConfigProvider struct{}
+type EnvProvider struct{}
 
-func (envConf *EnvConfigProvider) setValues(c *Config) error {
+func (envConf *EnvProvider) setValues(c *Config) error {
 	host, ok := os.LookupEnv("SERVER_ADDRESS")
 	if ok && strings.TrimSpace(host) != "" {
 		c.Host = host

@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-type FlagConfigProvider struct{}
+type FlagProvider struct{}
 
-func (flagConf *FlagConfigProvider) setValues(c *Config) error {
+func (flagConf *FlagProvider) setValues(c *Config) error {
 	host := flag.String("a", "", "Адрес запуска HTTP-сервера")
 	shortURLHost := flag.String("b", "", "Базовый адрес результирующего сокращённого URL")
 	flag.Parse()

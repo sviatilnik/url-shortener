@@ -1,8 +1,8 @@
 package config
 
-type DefaultConfigProvider struct{}
+type DefaultProvider struct{}
 
-func (d DefaultConfigProvider) setValues(c *Config) error {
+func (d DefaultProvider) setValues(c *Config) error {
 	c.Host = "localhost:8080"
 	c.ShortURLHost = "http://localhost:8080"
 	return nil

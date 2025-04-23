@@ -35,5 +35,5 @@ func getShortener(baseURL string) *shortener.Shortener {
 }
 
 func getConfig() config.Config {
-	return config.NewConfig(&config.DefaultConfigProvider{}, &config.FlagConfigProvider{}, &config.EnvConfigProvider{})
+	return config.NewConfig(&config.DefaultProvider{}, &config.FlagProvider{}, &config.EnvProvider{})
 }
