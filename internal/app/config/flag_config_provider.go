@@ -6,32 +6,20 @@ import (
 	"strings"
 )
 
-type FlagConfig struct {
-	Config
-}
+type FlagConfigProvider struct{}
 
-func NewFlagConfig(confg Config) Config {
-	if confg == nil {
-		confg = NewDefaultConfig(nil)
-	}
-	conf := &FlagConfig{
-		confg,
-	}
-	conf.parseFlags()
-
-	return conf
-}
-
-func (c *FlagConfig) parseFlags() {
+func (flagConf *FlagConfigProvider) setValues(c *Config) error {
 	host := flag.String("a", "", "Адрес запуска HTTP-сервера")
 	shortURLHost := flag.String("b", "", "Базовый адрес результирующего сокращённого URL")
 	flag.Parse()
 
 	if strings.TrimSpace(*host) != "" {
-		_ = c.Set("host", *host)
+		c.Host = *host
 	}
 
 	if strings.TrimSpace(*shortURLHost) != "" && util.IsURL(*shortURLHost) {
-		_ = c.Set("shortURLHost", *shortURLHost)
+		c.ShortURLHost = *shortURLHost
 	}
+
+	return nil
 }

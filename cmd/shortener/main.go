@@ -13,13 +13,13 @@ import (
 
 func main() {
 	conf := getConfig()
-	shorter := getShortener(conf.Get("shortURLHost").(string))
+	shorter := getShortener(conf.ShortURLHost)
 
 	r := chi.NewRouter()
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
 	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
 
-	host := conf.Get("host").(string)
+	host := conf.Host
 
 	err := http.ListenAndServe(host, r)
 	if err != nil {
@@ -35,5 +35,5 @@ func getShortener(baseURL string) *shortener.Shortener {
 }
 
 func getConfig() config.Config {
-	return config.NewEnvConfig(config.NewFlagConfig(nil))
+	return config.NewConfig(&config.DefaultConfigProvider{}, &config.FlagConfigProvider{}, &config.EnvConfigProvider{})
 }
