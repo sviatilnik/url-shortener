@@ -5,6 +5,8 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/handlers"
+	"github.com/sviatilnik/url-shortener/internal/app/logger"
+	"github.com/sviatilnik/url-shortener/internal/app/middlewares"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
@@ -14,8 +16,10 @@ import (
 func main() {
 	conf := getConfig()
 	shorter := getShortener(conf.ShortURLHost)
+	log := logger.NewLogger()
 
 	r := chi.NewRouter()
+	r.Use(middlewares.Log)
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
 	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
 
@@ -23,7 +27,7 @@ func main() {
 
 	err := http.ListenAndServe(host, r)
 	if err != nil {
-		panic(err)
+		log.Fatalw("Error starting server", "error", err)
 	}
 }
 
