@@ -22,7 +22,7 @@ func main() {
 	r.Use(middlewares.Log)
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
 	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
-	r.Post("/api/shorten", handlers.GetShortLinkApiHandler(shorter))
+	r.Post("/api/shorten", handlers.GetShortLinkAPIHandler(shorter))
 
 	host := conf.Host
 

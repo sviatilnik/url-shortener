@@ -15,7 +15,7 @@ type response struct {
 	Result string `json:"result"`
 }
 
-func GetShortLinkApiHandler(shortener *shortener.Shortener) http.HandlerFunc {
+func GetShortLinkAPIHandler(shortener *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
