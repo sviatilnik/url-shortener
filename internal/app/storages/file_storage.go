@@ -72,7 +72,14 @@ func (f *FileStorage) Get(key string) (string, error) {
 			return "", err
 		}
 
-		return item.OriginalURL, nil
+		if item.Short == key {
+			return item.OriginalURL, nil
+		}
+	}
+
+	err = scanner.Err()
+	if err != nil {
+		return "", err
 	}
 
 	return "", nil
