@@ -10,6 +10,16 @@ import (
 func Compress(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			gzr, err := gzip.NewReader(r.Body)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			r.Body = gzr
+		}
+
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			next.ServeHTTP(w, r)
 			return
