@@ -16,11 +16,11 @@ type response struct {
 	Result string `json:"result"`
 }
 
-type ApiShortLink struct {
+type APIShortLink struct {
 	Shortener *shortener.Shortener
 }
 
-func (h *ApiShortLink) Handler() http.HandlerFunc {
+func (h *APIShortLink) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
