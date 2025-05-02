@@ -18,5 +18,10 @@ func (envConf *EnvProvider) setValues(c *Config) error {
 		c.ShortURLHost = shortURLHost
 	}
 
+	fileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH")
+	if ok && strings.TrimSpace(fileStoragePath) != "" {
+		c.FileStoragePath = fileStoragePath
+	}
+
 	return nil
 }

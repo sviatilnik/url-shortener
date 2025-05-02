@@ -15,7 +15,7 @@ import (
 
 func main() {
 	conf := getConfig()
-	shorter := getShortener(conf.ShortURLHost)
+	shorter := getShortener(conf.ShortURLHost, &conf)
 	log := logger.NewLogger()
 
 	r := chi.NewRouter()
@@ -33,11 +33,11 @@ func main() {
 	}
 }
 
-func getShortener(baseURL string) *shortener.Shortener {
+func getShortener(baseURL string, config *config.Config) *shortener.Shortener {
 	conf := shortenerConfig.NewShortenerConfig()
 	_ = conf.SetURLBase(baseURL)
 
-	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), conf)
+	return shortener.NewShortener(storages.NewFileStorage(config.FileStoragePath), generators.NewRandomGenerator(10), conf)
 }
 
 func getConfig() config.Config {
