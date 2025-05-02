@@ -20,6 +20,7 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
+	r.Use(middlewares.Compress)
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
 	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
 	r.Post("/api/shorten", handlers.GetShortLinkAPIHandler(shorter))
