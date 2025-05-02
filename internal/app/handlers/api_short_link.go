@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
 	"net/http"
@@ -15,7 +16,11 @@ type response struct {
 	Result string `json:"result"`
 }
 
-func GetShortLinkAPIHandler(shortener *shortener.Shortener) http.HandlerFunc {
+type ApiShortLink struct {
+	Shortener *shortener.Shortener
+}
+
+func (h *ApiShortLink) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -34,21 +39,26 @@ func GetShortLinkAPIHandler(shortener *shortener.Shortener) http.HandlerFunc {
 			return
 		}
 
-		shortLink, err := shortener.GenerateShortLink(req.URL)
+		shortLink, err := h.Shortener.GenerateShortLink(req.URL)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			status := http.StatusInternalServerError
+			if errors.Is(err, shortener.ErrInvalidURL) {
+				status = http.StatusBadRequest
+			}
+
+			w.WriteHeader(status)
 			return
 		}
 		encodedResp, err := json.Marshal(response{
 			Result: shortLink,
 		})
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		_, _ = w.Write(encodedResp)
+		w.Write(encodedResp)
 	}
 }

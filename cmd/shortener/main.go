@@ -23,7 +23,9 @@ func main() {
 	r.Use(middlewares.Compress)
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
 	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
-	r.Post("/api/shorten", handlers.GetShortLinkAPIHandler(shorter))
+
+	apiShortLink := handlers.ApiShortLink{Shortener: shorter}
+	r.Post("/api/shorten", apiShortLink.Handler())
 
 	host := conf.Host
 

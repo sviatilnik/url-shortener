@@ -91,9 +91,9 @@ func TestGetShortLinkHandler(t *testing.T) {
 
 func TestApiGetShortLinkHandler(t *testing.T) {
 
-	handler := handlers.GetShortLinkAPIHandler(getTestShortener())
+	apiShortLinkHandler := handlers.ApiShortLink{Shortener: getTestShortener()}
 
-	srv := httptest.NewServer(handler)
+	srv := httptest.NewServer(apiShortLinkHandler.Handler())
 	defer srv.Close()
 
 	testCases := []struct {
