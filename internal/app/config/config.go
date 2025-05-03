@@ -1,8 +1,9 @@
 package config
 
 type Config struct {
-	Host         string
-	ShortURLHost string
+	Host            string
+	ShortURLHost    string
+	FileStoragePath string
 }
 
 func NewConfig(providers ...Provider) Config {

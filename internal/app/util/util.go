@@ -1,6 +1,8 @@
 package util
 
-import "net/url"
+import (
+	"net/url"
+)
 
 func IsURL(str string) bool {
 	u, err := url.Parse(str)

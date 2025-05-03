@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/handlers"
@@ -83,6 +84,89 @@ func TestGetShortLinkHandler(t *testing.T) {
 			if resp.StatusCode == http.StatusCreated {
 				respBody, _ := io.ReadAll(resp.Body)
 				assert.NotEmpty(t, respBody)
+			}
+		})
+	}
+}
+
+func TestApiGetShortLinkHandler(t *testing.T) {
+
+	apiShortLinkHandler := handlers.APIShortLink{Shortener: getTestShortener()}
+
+	srv := httptest.NewServer(apiShortLinkHandler.Handler())
+	defer srv.Close()
+
+	testCases := []struct {
+		name         string
+		fullLink     string
+		expectedCode int
+		method       string
+	}{
+		{
+			name:         "#1",
+			fullLink:     "http://google.com",
+			expectedCode: http.StatusCreated,
+			method:       http.MethodPost,
+		},
+		{
+			name:         "#2",
+			fullLink:     "",
+			expectedCode: http.StatusBadRequest,
+			method:       http.MethodPost,
+		},
+		{
+			name:         "#3",
+			fullLink:     " ",
+			expectedCode: http.StatusBadRequest,
+			method:       http.MethodPost,
+		},
+		{
+			name:         "#4",
+			fullLink:     "give me short link!",
+			expectedCode: http.StatusBadRequest,
+			method:       http.MethodPost,
+		},
+		{
+			name:         "#5",
+			fullLink:     "http://google.com",
+			expectedCode: http.StatusMethodNotAllowed,
+			method:       http.MethodGet,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+
+			r, err := json.Marshal(struct {
+				URL string `json:"url"`
+			}{
+				URL: test.fullLink,
+			})
+			assert.NoError(t, err)
+
+			client := &http.Client{}
+			req, _ := http.NewRequest(test.method, srv.URL+"/api/shorten", strings.NewReader(string(r)))
+			resp, err := client.Do(req)
+			if err != nil {
+				assert.NoError(t, err)
+			}
+			defer resp.Body.Close()
+
+			assert.Equal(t, test.expectedCode, resp.StatusCode)
+
+			if resp.StatusCode == http.StatusCreated {
+				respBody, _ := io.ReadAll(resp.Body)
+
+				assert.NotEmpty(t, respBody)
+
+				rsp := &struct {
+					Result string `json:"result"`
+				}{}
+
+				err = json.Unmarshal(respBody, rsp)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, rsp.Result)
+
 			}
 		})
 	}

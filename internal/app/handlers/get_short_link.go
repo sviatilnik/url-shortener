@@ -4,6 +4,7 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
 	"net/http"
+	"strings"
 )
 
 func GetShortLinkHandler(shortener *shortener.Shortener) http.HandlerFunc {
@@ -19,7 +20,7 @@ func GetShortLinkHandler(shortener *shortener.Shortener) http.HandlerFunc {
 			return
 		}
 
-		shortLink, err := shortener.GenerateShortLink(string(url))
+		shortLink, err := shortener.GenerateShortLink(strings.TrimSuffix(string(url), "\n"))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
