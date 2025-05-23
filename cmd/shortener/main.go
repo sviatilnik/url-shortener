@@ -46,6 +46,10 @@ func getShortener(baseURL string, db *sql.DB, config *config.Config) *shortener.
 	conf := shortenerConfig.NewShortenerConfig()
 	_ = conf.SetURLBase(baseURL)
 
+	return shortener.NewShortener(getStorage(db, config), generators.NewRandomGenerator(10), conf)
+}
+
+func getStorage(db *sql.DB, config *config.Config) storages.URLStorage {
 	storage := storages.NewInMemoryStorage()
 	if config.FileStoragePath != "" {
 		storage = storages.NewFileStorage(config.FileStoragePath)
@@ -54,7 +58,7 @@ func getShortener(baseURL string, db *sql.DB, config *config.Config) *shortener.
 		storage = storages.NewPostgresStorageStorage(db)
 	}
 
-	return shortener.NewShortener(storage, generators.NewRandomGenerator(10), conf)
+	return storage
 }
 
 func getConfig() config.Config {

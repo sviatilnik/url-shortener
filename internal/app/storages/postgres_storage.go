@@ -12,12 +12,15 @@ type PostgresStorage struct {
 }
 
 func NewPostgresStorageStorage(db *sql.DB) URLStorage {
-	return &PostgresStorage{
-		db: db,
-	}
+	postgresStorage := new(PostgresStorage)
+	postgresStorage.db = db
+
+	postgresStorage.init()
+
+	return postgresStorage
 }
 
-func (p PostgresStorage) Save(short string, original string) error {
+func (p *PostgresStorage) Save(short string, original string) error {
 	if strings.TrimSpace(short) == "" {
 		return ErrEmptyKey
 	}
@@ -26,7 +29,7 @@ func (p PostgresStorage) Save(short string, original string) error {
 	if errors.Is(err, ErrKeyNotFound) {
 		_, err = p.db.ExecContext(
 			context.Background(),
-			"INSERT INTO links (\"uuid\", \"originalURL\", \"shortURL\") VALUES ($1, $2, $3)",
+			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortURL\") VALUES ($1, $2, $3)",
 			short, original, short)
 		return err
 	}
@@ -35,13 +38,13 @@ func (p PostgresStorage) Save(short string, original string) error {
 		return err
 	}
 
-	_, err = p.db.ExecContext(context.Background(), "UPDATE links SET \"uuid\"=$1, \"originalURL\"=$2, \"shortURL\"=$3", short, original, short)
+	_, err = p.db.ExecContext(context.Background(), "UPDATE link SET \"uuid\"=$1, \"originalURL\"=$2, \"shortURL\"=$3", short, original, short)
 	return err
 }
 
-func (p PostgresStorage) Get(key string) (string, error) {
+func (p *PostgresStorage) Get(key string) (string, error) {
 	var fullURL string
-	err := p.db.QueryRowContext(context.Background(), "SELECT \"originalURL\" FROM links WHERE \"uuid\"=$1", key).Scan(&fullURL)
+	err := p.db.QueryRowContext(context.Background(), "SELECT \"originalURL\" FROM link WHERE \"uuid\"=$1", key).Scan(&fullURL)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", ErrKeyNotFound
 	}
@@ -51,4 +54,8 @@ func (p PostgresStorage) Get(key string) (string, error) {
 	}
 
 	return fullURL, nil
+}
+
+func (p PostgresStorage) init() {
+	p.db.ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS link(\"uuid\" character varying(255) NOT NULL,\"originalURL\" character varying(512) NOT NULL,\"shortURL\" character varying(255) NOT NULL,\"createdAt\" timestamp with time zone NOT NULL DEFAULT NOW(), PRIMARY KEY (\"uuid\"))")
 }
