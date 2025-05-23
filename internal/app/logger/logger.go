@@ -10,7 +10,7 @@ var instance *zap.SugaredLogger
 
 func getInstance() *zap.SugaredLogger {
 	once.Do(func() {
-		logger, err := zap.NewDevelopment()
+		logger, err := zap.NewProduction()
 		if err != nil {
 			panic(err)
 		}

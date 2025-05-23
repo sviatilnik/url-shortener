@@ -4,6 +4,7 @@ type Config struct {
 	Host            string
 	ShortURLHost    string
 	FileStoragePath string
+	DatabaseDSN     string
 }
 
 func NewConfig(providers ...Provider) Config {
