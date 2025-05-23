@@ -19,13 +19,14 @@ import (
 
 func main() {
 	conf := getConfig()
-	shorter := getShortener(conf.ShortURLHost, &conf)
 	log := logger.NewLogger()
 
 	connection, connErr := getDBConnection(&conf)
 	if connErr != nil {
-		log.Info(connErr)
+		log.Fatalw("Failed to connect to database", "error", connErr)
 	}
+
+	shorter := getShortener(conf.ShortURLHost, connection, &conf)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
@@ -35,19 +36,17 @@ func main() {
 	r.Get("/ping", handlers.PingHandler(connection))
 	r.Post("/api/shorten", handlers.APIShortLinkHandler(shorter))
 
-	host := conf.Host
-
-	err := http.ListenAndServe(host, r)
+	err := http.ListenAndServe(conf.Host, r)
 	if err != nil {
 		log.Fatalw("Error starting server", "error", err)
 	}
 }
 
-func getShortener(baseURL string, config *config.Config) *shortener.Shortener {
+func getShortener(baseURL string, db *sql.DB, config *config.Config) *shortener.Shortener {
 	conf := shortenerConfig.NewShortenerConfig()
 	_ = conf.SetURLBase(baseURL)
 
-	return shortener.NewShortener(storages.NewFileStorage(config.FileStoragePath), generators.NewRandomGenerator(10), conf)
+	return shortener.NewShortener(storages.NewPostgresStorageStorage(db), generators.NewRandomGenerator(10), conf)
 }
 
 func getConfig() config.Config {
@@ -62,6 +61,7 @@ func getDBConnection(config *config.Config) (*sql.DB, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
 	if err = conn.PingContext(ctx); err != nil {
 		return nil, err
 	}
