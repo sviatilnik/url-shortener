@@ -23,7 +23,7 @@ func main() {
 
 	connection, connErr := getDBConnection(&conf)
 	if connErr != nil {
-		log.Fatalw("Failed to connect to database", "error", connErr)
+		log.Panicln("Failed to connect to database")
 	}
 
 	shorter := getShortener(conf.ShortURLHost, connection, &conf)
