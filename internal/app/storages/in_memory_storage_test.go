@@ -29,7 +29,7 @@ func TestInMemoryStorage_Save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			i := NewInMemoryStorage()
 			link := &models.Link{
-				Id:        tt.key,
+				ID:        tt.key,
 				ShortCode: tt.value,
 			}
 			if tt.wantErr {

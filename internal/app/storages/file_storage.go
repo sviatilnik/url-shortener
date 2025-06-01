@@ -41,7 +41,7 @@ func (f *FileStorage) Save(link *models.Link) error {
 	item := &storeItem{
 		OriginalURL: link.OriginalURL,
 		Short:       link.ShortCode,
-		UUID:        link.Id,
+		UUID:        link.ID,
 	}
 
 	marshal, err := json.Marshal(item)
@@ -89,7 +89,7 @@ func (f *FileStorage) Get(shortCode string) (*models.Link, error) {
 
 		if item.Short == shortCode {
 			return &models.Link{
-				Id:          item.UUID,
+				ID:          item.UUID,
 				ShortCode:   item.Short,
 				OriginalURL: item.OriginalURL,
 			}, nil

@@ -1,7 +1,7 @@
 package models
 
 type Link struct {
-	Id          string
+	ID          string
 	ShortCode   string
 	ShortURL    string
 	OriginalURL string

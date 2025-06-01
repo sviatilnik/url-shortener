@@ -10,12 +10,12 @@ import (
 )
 
 type batchRequestItem struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
 type batchResponseItem struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
 
@@ -43,7 +43,7 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		links := make([]models.Link, len(req))
 		for _, item := range req {
 			links = append(links, models.Link{
-				Id:          item.CorrelationId,
+				ID:          item.CorrelationID,
 				OriginalURL: item.OriginalURL,
 			})
 		}
@@ -61,7 +61,7 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		resp := make([]batchResponseItem, 0)
 		for _, item := range generatedLinks {
 			resp = append(resp, batchResponseItem{
-				CorrelationId: item.Id,
+				CorrelationID: item.ID,
 				ShortURL:      item.ShortURL,
 			})
 		}

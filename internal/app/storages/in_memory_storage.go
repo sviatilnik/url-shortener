@@ -16,11 +16,11 @@ func NewInMemoryStorage() URLStorage {
 }
 
 func (i InMemoryStorage) Save(link *models.Link) error {
-	if strings.TrimSpace(link.Id) == "" {
+	if strings.TrimSpace(link.ID) == "" {
 		return ErrEmptyKey
 	}
 
-	i.store[link.Id] = link.OriginalURL
+	i.store[link.ID] = link.OriginalURL
 	return nil
 }
 
@@ -42,7 +42,7 @@ func (i InMemoryStorage) Get(shortCode string) (*models.Link, error) {
 	}
 
 	return &models.Link{
-		Id:          shortCode,
+		ID:          shortCode,
 		OriginalURL: i.store[shortCode],
 		ShortCode:   shortCode,
 	}, nil

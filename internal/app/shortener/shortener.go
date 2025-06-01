@@ -55,7 +55,7 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		}
 
 		link := &models.Link{
-			Id:          short,
+			ID:          short,
 			ShortCode:   short,
 			OriginalURL: url,
 		}

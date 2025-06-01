@@ -21,21 +21,21 @@ func NewPostgresStorageStorage(db *sql.DB) InitableStorage {
 }
 
 func (p *PostgresStorage) Save(link *models.Link) error {
-	if strings.TrimSpace(link.Id) == "" {
+	if strings.TrimSpace(link.ID) == "" {
 		return ErrEmptyKey
 	}
 
-	if !p.isLinkExists(link.Id) {
+	if !p.isLinkExists(link.ID) {
 		_, err := p.db.ExecContext(
 			context.Background(),
 			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
-			link.Id, link.OriginalURL, link.ShortCode)
+			link.ID, link.OriginalURL, link.ShortCode)
 		return err
 	}
 
 	_, err := p.db.ExecContext(context.Background(),
 		"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
-		link.OriginalURL, link.ShortCode, link.Id)
+		link.OriginalURL, link.ShortCode, link.ID)
 
 	return err
 }
@@ -48,11 +48,11 @@ func (p *PostgresStorage) BatchSave(links []*models.Link) error {
 	}
 
 	for _, link := range links {
-		if p.isLinkExists(link.Id) {
+		if p.isLinkExists(link.ID) {
 			_, err = p.db.ExecContext(
 				context.Background(),
 				"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
-				link.OriginalURL, link.ShortCode, link.Id)
+				link.OriginalURL, link.ShortCode, link.ID)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -62,7 +62,7 @@ func (p *PostgresStorage) BatchSave(links []*models.Link) error {
 		_, err = tx.ExecContext(
 			context.Background(),
 			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
-			link.Id, link.OriginalURL, link.ShortCode)
+			link.ID, link.OriginalURL, link.ShortCode)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -100,7 +100,7 @@ func (p *PostgresStorage) Get(shortCode string) (*models.Link, error) {
 	}
 
 	return &models.Link{
-		Id:          row.uuid,
+		ID:          row.uuid,
 		OriginalURL: row.originalURL,
 		ShortCode:   row.shortCode,
 	}, nil
