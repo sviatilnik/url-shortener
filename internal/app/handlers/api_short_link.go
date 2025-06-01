@@ -35,15 +35,20 @@ func APIShortLinkHandler(short *shortener.Shortener) http.HandlerFunc {
 			return
 		}
 
+		status := http.StatusCreated
 		shortLink, err := short.GenerateShortLink(req.URL)
 		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, shortener.ErrInvalidURL) {
-				status = http.StatusBadRequest
+			if errors.Is(err, shortener.ErrLinkConflict) {
+				status = http.StatusConflict
+			} else {
+				status = http.StatusInternalServerError
+				if errors.Is(err, shortener.ErrInvalidURL) {
+					status = http.StatusBadRequest
+				}
+				w.WriteHeader(status)
+				return
 			}
 
-			w.WriteHeader(status)
-			return
 		}
 		encodedResp, err := json.Marshal(response{
 			Result: shortLink,
@@ -54,7 +59,7 @@ func APIShortLinkHandler(short *shortener.Shortener) http.HandlerFunc {
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(status)
 		w.Write(encodedResp)
 	}
 }

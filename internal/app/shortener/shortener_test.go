@@ -13,7 +13,7 @@ import (
 func TestShortener_GetFullLinkByID(t *testing.T) {
 
 	i := storages.NewInMemoryStorage()
-	err := i.Save(&models.Link{
+	_, err := i.Save(&models.Link{
 		ID:          "test",
 		ShortCode:   "test",
 		OriginalURL: "http://google.com",

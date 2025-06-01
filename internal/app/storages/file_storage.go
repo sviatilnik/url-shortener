@@ -28,10 +28,10 @@ func NewFileStorage(filePath string) *FileStorage {
 	}
 }
 
-func (f *FileStorage) Save(link *models.Link) error {
+func (f *FileStorage) Save(link *models.Link) (*models.Link, error) {
 	file, err := os.OpenFile(f.filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -46,22 +46,22 @@ func (f *FileStorage) Save(link *models.Link) error {
 
 	marshal, err := json.Marshal(item)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if _, err := file.Write(marshal); err != nil {
-		return err
+		return nil, err
 	}
 
 	file.WriteString("\n")
 
 	f.lastUUID++
-	return nil
+	return link, nil
 }
 
 func (f *FileStorage) BatchSave(links []*models.Link) error {
 	for _, link := range links {
-		if err := f.Save(link); err != nil {
+		if _, err := f.Save(link); err != nil {
 			return err
 		}
 	}

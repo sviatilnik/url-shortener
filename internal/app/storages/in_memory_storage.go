@@ -15,18 +15,18 @@ func NewInMemoryStorage() URLStorage {
 	}
 }
 
-func (i InMemoryStorage) Save(link *models.Link) error {
+func (i InMemoryStorage) Save(link *models.Link) (*models.Link, error) {
 	if strings.TrimSpace(link.ID) == "" {
-		return ErrEmptyKey
+		return nil, ErrEmptyKey
 	}
 
 	i.store[link.ID] = link.OriginalURL
-	return nil
+	return link, nil
 }
 
 func (i InMemoryStorage) BatchSave(links []*models.Link) error {
 	for _, link := range links {
-		if err := i.Save(link); err != nil {
+		if _, err := i.Save(link); err != nil {
 			return err
 		}
 	}

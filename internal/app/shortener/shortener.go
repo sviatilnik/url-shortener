@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
@@ -41,27 +42,30 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		return "", ErrInvalidURL
 	}
 
-	var short string
-	var err error
-
+	link := &models.Link{}
+	var saveErr error
 	attemptsLeft := 10
 	for {
 		if attemptsLeft <= 0 {
 			break
 		}
-		short, err = s.generator.Get(url)
+		short, err := s.generator.Get(url)
 		if err != nil {
 			return "", err
 		}
 
-		link := &models.Link{
-			ID:          short,
-			ShortCode:   short,
-			OriginalURL: url,
+		link.ID = short
+		link.ShortCode = short
+		link.OriginalURL = url
+
+		savedLink, err := s.storage.Save(link)
+		if err == nil {
+			break
 		}
 
-		err = s.storage.Save(link)
-		if err == nil {
+		if errors.Is(err, storages.ErrOriginalURLAlreadyExists) {
+			link.ShortCode = savedLink.ShortCode
+			saveErr = ErrLinkConflict
 			break
 		}
 
@@ -72,7 +76,7 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		return "", ErrCreateShortLink
 	}
 
-	return s.getShortBase() + "/" + short, nil
+	return s.getShortBase() + "/" + link.ShortCode, saveErr
 }
 
 func (s *Shortener) GenerateBatchShortLink(links []models.Link) ([]*models.Link, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/jackc/pgerrcode"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"log"
 	"strings"
@@ -20,24 +21,22 @@ func NewPostgresStorageStorage(db *sql.DB) InitableStorage {
 	return postgresStorage
 }
 
-func (p *PostgresStorage) Save(link *models.Link) error {
+func (p *PostgresStorage) Save(link *models.Link) (*models.Link, error) {
 	if strings.TrimSpace(link.ID) == "" {
-		return ErrEmptyKey
+		return nil, ErrEmptyKey
+	}
+	_, err := p.db.ExecContext(
+		context.Background(),
+		"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
+		link.ID, link.OriginalURL, link.ShortCode)
+
+	if err != nil {
+		if strings.Contains(err.Error(), pgerrcode.UniqueViolation) {
+			return p.GetByOriginalURL(link.OriginalURL), ErrOriginalURLAlreadyExists
+		}
 	}
 
-	if !p.isLinkExists(link.ID) {
-		_, err := p.db.ExecContext(
-			context.Background(),
-			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
-			link.ID, link.OriginalURL, link.ShortCode)
-		return err
-	}
-
-	_, err := p.db.ExecContext(context.Background(),
-		"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
-		link.OriginalURL, link.ShortCode, link.ID)
-
-	return err
+	return link, err
 }
 
 func (p *PostgresStorage) BatchSave(links []*models.Link) error {
@@ -130,6 +129,33 @@ func (p *PostgresStorage) Init() error {
     "createdAt" timestamp with time zone NOT NULL DEFAULT NOW(),
     PRIMARY KEY ("uuid"));
     CREATE INDEX IF NOT EXISTS "idx_link_shortCode" ON link ("shortCode");
+	CREATE UNIQUE INDEX IF NOT EXISTS  "idx_link_originalUrl" ON link ("originalURL");
 `)
 	return err
+}
+
+func (p *PostgresStorage) GetByOriginalURL(originalURL string) *models.Link {
+	var row struct {
+		uuid        string
+		originalURL string
+		shortCode   string
+	}
+
+	err := p.db.QueryRowContext(
+		context.Background(),
+		`SELECT "uuid", "originalURL",  "shortCode" 
+				FROM link 
+				WHERE "originalURL"=$1 
+				ORDER BY "createdAt" DESC LIMIT 1`,
+		originalURL).Scan(&row.uuid, &row.originalURL, &row.shortCode)
+
+	if err != nil {
+		return nil
+	}
+
+	return &models.Link{
+		ID:          row.uuid,
+		OriginalURL: row.originalURL,
+		ShortCode:   row.shortCode,
+	}
 }

@@ -32,10 +32,12 @@ func TestInMemoryStorage_Save(t *testing.T) {
 				ID:        tt.key,
 				ShortCode: tt.value,
 			}
+			_, err := i.Save(link)
+
 			if tt.wantErr {
-				assert.Error(t, i.Save(link))
+				assert.Error(t, err)
 			} else {
-				assert.NoError(t, i.Save(link))
+				assert.NoError(t, err)
 			}
 		})
 	}
