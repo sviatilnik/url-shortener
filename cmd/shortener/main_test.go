@@ -214,7 +214,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 				assert.NotEmpty(t, test.shortLink)
 			}
 			r := httptest.NewRequest(test.method, test.shortLink, nil)
-			r.SetPathValue("id", strings.Replace(test.shortLink, testBaseURL, "", 1))
+			r.SetPathValue("short_code", strings.Replace(test.shortLink, testBaseURL, "", 1))
 
 			handler := handlers.RedirectToFullLinkHandler(shorter)
 			handler.ServeHTTP(w, r)

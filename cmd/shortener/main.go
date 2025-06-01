@@ -32,9 +32,10 @@ func main() {
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
-	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
+	r.Get("/{short_code}", handlers.RedirectToFullLinkHandler(shorter))
 	r.Get("/ping", handlers.PingHandler(connection))
 	r.Post("/api/shorten", handlers.APIShortLinkHandler(shorter))
+	r.Post("/api/shorten/batch", handlers.BatchShortLinkHandler(shorter))
 
 	err := http.ListenAndServe(conf.Host, r)
 	if err != nil {
@@ -50,15 +51,21 @@ func getShortener(baseURL string, db *sql.DB, config *config.Config) *shortener.
 }
 
 func getStorage(db *sql.DB, config *config.Config) storages.URLStorage {
-	storage := storages.NewInMemoryStorage()
-	if config.FileStoragePath != "" {
-		storage = storages.NewFileStorage(config.FileStoragePath)
-	}
 	if db != nil {
-		storage = storages.NewPostgresStorageStorage(db)
+		storage := storages.NewPostgresStorageStorage(db)
+		err := storage.Init()
+		if err != nil {
+			return nil
+		}
+
+		return storage
 	}
 
-	return storage
+	if config.FileStoragePath != "" {
+		return storages.NewFileStorage(config.FileStoragePath)
+	}
+
+	return storages.NewInMemoryStorage()
 }
 
 func getConfig() config.Config {

@@ -1,6 +1,7 @@
 package storages
 
 import (
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"strings"
 )
 
@@ -14,21 +15,35 @@ func NewInMemoryStorage() URLStorage {
 	}
 }
 
-func (i InMemoryStorage) Save(key string, value string) error {
-	if strings.TrimSpace(key) == "" {
+func (i InMemoryStorage) Save(link *models.Link) error {
+	if strings.TrimSpace(link.Id) == "" {
 		return ErrEmptyKey
 	}
 
-	i.store[key] = value
+	i.store[link.Id] = link.OriginalURL
 	return nil
 }
 
-func (i InMemoryStorage) Get(key string) (string, error) {
-	_, ok := i.store[key]
-
-	if !ok {
-		return "", ErrKeyNotFound
+func (i InMemoryStorage) BatchSave(links []*models.Link) error {
+	for _, link := range links {
+		if err := i.Save(link); err != nil {
+			return err
+		}
 	}
 
-	return i.store[key], nil
+	return nil
+}
+
+func (i InMemoryStorage) Get(shortCode string) (*models.Link, error) {
+	_, ok := i.store[shortCode]
+
+	if !ok {
+		return nil, ErrKeyNotFound
+	}
+
+	return &models.Link{
+		Id:          shortCode,
+		OriginalURL: i.store[shortCode],
+		ShortCode:   shortCode,
+	}, nil
 }
