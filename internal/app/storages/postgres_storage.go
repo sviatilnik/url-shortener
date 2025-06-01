@@ -25,35 +25,44 @@ func (p *PostgresStorage) Save(link *models.Link) error {
 		return ErrEmptyKey
 	}
 
-	_, err := p.Get(link.Id)
-	if errors.Is(err, ErrKeyNotFound) {
-		_, err = p.db.ExecContext(
+	if !p.isLinkExists(link.Id) {
+		_, err := p.db.ExecContext(
 			context.Background(),
 			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
 			link.Id, link.OriginalURL, link.ShortCode)
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
+	_, err := p.db.ExecContext(context.Background(),
+		"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
+		link.OriginalURL, link.ShortCode, link.Id)
 
-	_, err = p.db.ExecContext(context.Background(), "UPDATE link SET \"uuid\"=$1, \"originalURL\"=$2, \"shortCode\"=$3", link.Id, link.OriginalURL, link.ShortCode)
 	return err
 }
 
 func (p *PostgresStorage) BatchSave(links []*models.Link) error {
 	tx, err := p.db.Begin()
+	log.Println(err)
 	if err != nil {
 		return err
 	}
 
 	for _, link := range links {
+		if p.isLinkExists(link.Id) {
+			_, err = p.db.ExecContext(
+				context.Background(),
+				"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
+				link.OriginalURL, link.ShortCode, link.Id)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+			continue
+		}
 		_, err = tx.ExecContext(
 			context.Background(),
 			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
 			link.Id, link.OriginalURL, link.ShortCode)
-		log.Println(err)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -77,8 +86,11 @@ func (p *PostgresStorage) Get(shortCode string) (*models.Link, error) {
 
 	err := p.db.QueryRowContext(
 		context.Background(),
-		"SELECT * FROM link WHERE \"shortCode\"=$1 ORDER BY \"createdAt\" DESC LIMIT 1",
-		shortCode).Scan(&row)
+		`SELECT "uuid", "originalURL",  "shortCode" 
+				FROM link 
+				WHERE "shortCode"=$1 
+				ORDER BY "createdAt" DESC LIMIT 1`,
+		shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrKeyNotFound
 	}
@@ -92,6 +104,21 @@ func (p *PostgresStorage) Get(shortCode string) (*models.Link, error) {
 		OriginalURL: row.originalURL,
 		ShortCode:   row.shortCode,
 	}, nil
+}
+
+func (p *PostgresStorage) isLinkExists(id string) bool {
+	var dummy interface{}
+	row := p.db.QueryRowContext(context.Background(), "SELECT 1 FROM link WHERE \"uuid\"=$1 ", id)
+	err := row.Scan(&dummy)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return false
+	case err != nil:
+		return false
+	}
+
+	return true
 }
 
 func (p *PostgresStorage) Init() error {

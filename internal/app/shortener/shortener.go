@@ -79,7 +79,7 @@ func (s *Shortener) GenerateBatchShortLink(links []models.Link) ([]*models.Link,
 	validLinks := make([]*models.Link, 0)
 
 	if len(links) == 0 {
-		return nil, NoLinksInBatch
+		return nil, ErrNoLinksInBatch
 	}
 
 	for _, link := range links {
@@ -98,7 +98,7 @@ func (s *Shortener) GenerateBatchShortLink(links []models.Link) ([]*models.Link,
 	}
 
 	if len(validLinks) == 0 {
-		return nil, NoValidLinksInBatch
+		return nil, ErrNoValidLinksInBatch
 	}
 
 	err := s.storage.BatchSave(validLinks)

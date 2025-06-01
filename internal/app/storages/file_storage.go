@@ -62,7 +62,6 @@ func (f *FileStorage) Save(link *models.Link) error {
 func (f *FileStorage) BatchSave(links []*models.Link) error {
 	for _, link := range links {
 		if err := f.Save(link); err != nil {
-
 			return err
 		}
 	}

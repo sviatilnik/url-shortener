@@ -49,7 +49,7 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		}
 
 		generatedLinks, err := shorter.GenerateBatchShortLink(links)
-		if errors.Is(err, shortener.NoValidLinksInBatch) || errors.Is(err, shortener.NoLinksInBatch) {
+		if errors.Is(err, shortener.ErrNoValidLinksInBatch) || errors.Is(err, shortener.ErrNoLinksInBatch) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -57,7 +57,7 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		
+
 		resp := make([]batchResponseItem, 0)
 		for _, item := range generatedLinks {
 			resp = append(resp, batchResponseItem{
