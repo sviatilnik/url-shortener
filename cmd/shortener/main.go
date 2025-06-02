@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/handlers"
@@ -11,37 +14,76 @@ import (
 	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"net/http"
+	"time"
 )
 
 func main() {
 	conf := getConfig()
-	shorter := getShortener(conf.ShortURLHost, &conf)
 	log := logger.NewLogger()
+
+	connection, connErr := getDBConnection(&conf)
+	if connErr != nil {
+		log.Info("Failed to connect to database")
+	}
+
+	shorter := getShortener(conf.ShortURLHost, connection, &conf)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
-	r.Get("/{id}", handlers.RedirectToFullLinkHandler(shorter))
+	r.Get("/{short_code}", handlers.RedirectToFullLinkHandler(shorter))
+	r.Get("/ping", handlers.PingHandler(connection))
+	r.Post("/api/shorten", handlers.APIShortLinkHandler(shorter))
+	r.Post("/api/shorten/batch", handlers.BatchShortLinkHandler(shorter))
 
-	apiShortLink := handlers.APIShortLink{Shortener: shorter}
-	r.Post("/api/shorten", apiShortLink.Handler())
-
-	host := conf.Host
-
-	err := http.ListenAndServe(host, r)
+	err := http.ListenAndServe(conf.Host, r)
 	if err != nil {
 		log.Fatalw("Error starting server", "error", err)
 	}
 }
 
-func getShortener(baseURL string, config *config.Config) *shortener.Shortener {
+func getShortener(baseURL string, db *sql.DB, config *config.Config) *shortener.Shortener {
 	conf := shortenerConfig.NewShortenerConfig()
 	_ = conf.SetURLBase(baseURL)
 
-	return shortener.NewShortener(storages.NewFileStorage(config.FileStoragePath), generators.NewRandomGenerator(10), conf)
+	return shortener.NewShortener(getStorage(db, config), generators.NewRandomGenerator(10), conf)
+}
+
+func getStorage(db *sql.DB, config *config.Config) storages.URLStorage {
+	if db != nil {
+		storage := storages.NewPostgresStorageStorage(db)
+		err := storage.Init()
+		if err != nil {
+			return nil
+		}
+
+		return storage
+	}
+
+	if config.FileStoragePath != "" {
+		return storages.NewFileStorage(config.FileStoragePath)
+	}
+
+	return storages.NewInMemoryStorage()
 }
 
 func getConfig() config.Config {
 	return config.NewConfig(&config.DefaultProvider{}, &config.FlagProvider{}, &config.EnvProvider{})
+}
+
+func getDBConnection(config *config.Config) (*sql.DB, error) {
+	conn, err := sql.Open("pgx", config.DatabaseDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err = conn.PingContext(ctx); err != nil {
+		return nil, err
+	}
+
+	return conn, nil
 }

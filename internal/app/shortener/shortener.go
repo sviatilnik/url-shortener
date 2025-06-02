@@ -1,7 +1,9 @@
 package shortener
 
 import (
+	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"github.com/sviatilnik/url-shortener/internal/app/util"
@@ -22,12 +24,17 @@ func NewShortener(store storages.URLStorage, generator generators.Generator, con
 	}
 }
 
-func (s *Shortener) GetFullLinkByID(id string) (string, error) {
-	if strings.TrimSpace(id) == "" {
+func (s *Shortener) GetFullLinkByShortCode(shortCode string) (string, error) {
+	if strings.TrimSpace(shortCode) == "" {
 		return "", ErrIDIsRequired
 	}
 
-	return s.storage.Get(id)
+	link, err := s.storage.Get(shortCode)
+	if err != nil {
+		return "", err
+	}
+
+	return link.OriginalURL, nil
 }
 
 func (s *Shortener) GenerateShortLink(url string) (string, error) {
@@ -35,21 +42,30 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		return "", ErrInvalidURL
 	}
 
-	var short string
-	var err error
-
+	link := &models.Link{}
+	var saveErr error
 	attemptsLeft := 10
 	for {
 		if attemptsLeft <= 0 {
 			break
 		}
-		short, err = s.generator.Get(url)
+		short, err := s.generator.Get(url)
 		if err != nil {
 			return "", err
 		}
 
-		err = s.storage.Save(short, url)
+		link.ID = short
+		link.ShortCode = short
+		link.OriginalURL = url
+
+		savedLink, err := s.storage.Save(link)
 		if err == nil {
+			break
+		}
+
+		if errors.Is(err, storages.ErrOriginalURLAlreadyExists) {
+			link.ShortCode = savedLink.ShortCode
+			saveErr = ErrLinkConflict
 			break
 		}
 
@@ -60,8 +76,49 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		return "", ErrCreateShortLink
 	}
 
-	urlBase := s.conf.GetParamValue("urlBase", "http://localhost/").(string)
-	urlBase = strings.TrimRight(urlBase, "/")
+	return s.getShortBase() + "/" + link.ShortCode, saveErr
+}
 
-	return urlBase + "/" + short, nil
+func (s *Shortener) GenerateBatchShortLink(links []models.Link) ([]*models.Link, error) {
+	validLinks := make([]*models.Link, 0)
+
+	if len(links) == 0 {
+		return nil, ErrNoLinksInBatch
+	}
+
+	for _, link := range links {
+		if !util.IsURL(link.OriginalURL) {
+			continue
+		}
+
+		short, err := s.generator.Get(link.OriginalURL)
+		if err != nil {
+			continue
+		}
+
+		link.ShortCode = short
+
+		validLinks = append(validLinks, &link)
+	}
+
+	if len(validLinks) == 0 {
+		return nil, ErrNoValidLinksInBatch
+	}
+
+	err := s.storage.BatchSave(validLinks)
+	if err != nil {
+		return nil, err
+	}
+
+	shortBase := s.getShortBase()
+	for _, link := range validLinks {
+		link.ShortURL = shortBase + "/" + link.ShortCode
+	}
+
+	return validLinks, nil
+}
+
+func (s *Shortener) getShortBase() string {
+	urlBase := s.conf.GetParamValue("urlBase", "http://localhost/").(string)
+	return strings.TrimRight(urlBase, "/")
 }

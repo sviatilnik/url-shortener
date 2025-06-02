@@ -23,5 +23,10 @@ func (envConf *EnvProvider) setValues(c *Config) error {
 		c.FileStoragePath = fileStoragePath
 	}
 
+	databaseDSN, ok := os.LookupEnv("DATABASE_DSN")
+	if ok && strings.TrimSpace(databaseDSN) != "" {
+		c.DatabaseDSN = databaseDSN
+	}
+
 	return nil
 }

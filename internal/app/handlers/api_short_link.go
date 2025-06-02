@@ -16,11 +16,7 @@ type response struct {
 	Result string `json:"result"`
 }
 
-type APIShortLink struct {
-	Shortener *shortener.Shortener
-}
-
-func (h *APIShortLink) Handler() http.HandlerFunc {
+func APIShortLinkHandler(short *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -39,15 +35,20 @@ func (h *APIShortLink) Handler() http.HandlerFunc {
 			return
 		}
 
-		shortLink, err := h.Shortener.GenerateShortLink(req.URL)
+		status := http.StatusCreated
+		shortLink, err := short.GenerateShortLink(req.URL)
 		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, shortener.ErrInvalidURL) {
-				status = http.StatusBadRequest
+			if errors.Is(err, shortener.ErrLinkConflict) {
+				status = http.StatusConflict
+			} else {
+				status = http.StatusInternalServerError
+				if errors.Is(err, shortener.ErrInvalidURL) {
+					status = http.StatusBadRequest
+				}
+				w.WriteHeader(status)
+				return
 			}
 
-			w.WriteHeader(status)
-			return
 		}
 		encodedResp, err := json.Marshal(response{
 			Result: shortLink,
@@ -58,7 +59,7 @@ func (h *APIShortLink) Handler() http.HandlerFunc {
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(status)
 		w.Write(encodedResp)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"testing"
@@ -12,7 +13,11 @@ import (
 func TestShortener_GetFullLinkByID(t *testing.T) {
 
 	i := storages.NewInMemoryStorage()
-	err := i.Save("test", "http://google.com")
+	_, err := i.Save(&models.Link{
+		ID:          "test",
+		ShortCode:   "test",
+		OriginalURL: "http://google.com",
+	})
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -22,7 +27,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 		storage   storages.URLStorage
 		generator generators.Generator
 		conf      config.ShortenerConfig
-		id        string
+		shortCode string
 		want      string
 		wantErr   bool
 	}{
@@ -31,7 +36,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			storage:   i,
 			generator: generators.NewRandomGenerator(10),
 			conf:      config.NewShortenerConfig(),
-			id:        "test",
+			shortCode: "test",
 			want:      "http://google.com",
 		},
 		{
@@ -39,7 +44,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			storage:   i,
 			generator: generators.NewRandomGenerator(10),
 			conf:      config.NewShortenerConfig(),
-			id:        "test3",
+			shortCode: "test3",
 			wantErr:   true,
 		},
 		{
@@ -47,7 +52,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			storage:   storages.NewInMemoryStorage(),
 			generator: generators.NewRandomGenerator(10),
 			conf:      config.NewShortenerConfig(),
-			id:        "test",
+			shortCode: "test",
 			wantErr:   true,
 		},
 		{
@@ -55,14 +60,14 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			storage:   storages.NewInMemoryStorage(),
 			generator: generators.NewRandomGenerator(10),
 			conf:      config.NewShortenerConfig(),
-			id:        " ",
+			shortCode: " ",
 			wantErr:   true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			shortener := NewShortener(tt.storage, tt.generator, tt.conf)
-			got, err := shortener.GetFullLinkByID(tt.id)
+			got, err := shortener.GetFullLinkByShortCode(tt.shortCode)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
