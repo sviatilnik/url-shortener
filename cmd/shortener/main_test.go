@@ -61,12 +61,6 @@ func TestGetShortLinkHandler(t *testing.T) {
 			expectedCode: http.StatusBadRequest,
 			method:       http.MethodPost,
 		},
-		{
-			name:         "#5",
-			fullLink:     "http://google.com",
-			expectedCode: http.StatusMethodNotAllowed,
-			method:       http.MethodGet,
-		},
 	}
 
 	for _, test := range testCases {
@@ -126,12 +120,6 @@ func TestApiGetShortLinkHandler(t *testing.T) {
 			fullLink:     "give me short link!",
 			expectedCode: http.StatusBadRequest,
 			method:       http.MethodPost,
-		},
-		{
-			name:         "#5",
-			fullLink:     "http://google.com",
-			expectedCode: http.StatusMethodNotAllowed,
-			method:       http.MethodGet,
 		},
 	}
 
@@ -197,12 +185,6 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 			expectedCode: http.StatusBadRequest,
 			method:       http.MethodGet,
 		},
-		{
-			name:         "#5",
-			fullLink:     "http://google.com",
-			expectedCode: http.StatusMethodNotAllowed,
-			method:       http.MethodPost,
-		},
 	}
 
 	for _, test := range testCases {
@@ -223,7 +205,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 			resp := w.Result()
 			defer resp.Body.Close()
 
-			assert.Equal(t, test.expectedCode, resp.StatusCode)
+			assert.Equal(t, test.expectedCode, w.Code)
 			if resp.StatusCode == http.StatusTemporaryRedirect {
 				assert.Equal(t, test.fullLink, resp.Header.Get("Location"))
 			}

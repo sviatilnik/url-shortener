@@ -10,11 +10,6 @@ import (
 
 func GetShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
 		url, err := io.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -24,7 +19,6 @@ func GetShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		status := http.StatusCreated
 		shortLink, err := shorter.GenerateShortLink(r.Context(), strings.TrimSuffix(string(url), "\n"))
 		if err != nil {
-			//log.Println(err)
 			if errors.Is(err, shortener.ErrLinkConflict) {
 				status = http.StatusConflict
 			} else {

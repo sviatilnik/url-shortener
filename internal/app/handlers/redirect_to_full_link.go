@@ -7,10 +7,6 @@ import (
 
 func RedirectToFullLinkHandler(shortener *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
 
 		shortCode := r.PathValue("short_code")
 
