@@ -14,7 +14,7 @@ func RedirectToFullLinkHandler(shortener *shortener.Shortener) http.HandlerFunc 
 
 		shortCode := r.PathValue("short_code")
 
-		fullLink, err := shortener.GetFullLinkByShortCode(shortCode)
+		fullLink, err := shortener.GetFullLinkByShortCode(r.Context(), shortCode)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return

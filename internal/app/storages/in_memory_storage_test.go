@@ -1,6 +1,7 @@
 package storages
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"testing"
@@ -32,7 +33,7 @@ func TestInMemoryStorage_Save(t *testing.T) {
 				ID:        tt.key,
 				ShortCode: tt.value,
 			}
-			_, err := i.Save(link)
+			_, err := i.Save(context.Background(), link)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -76,7 +77,7 @@ func TestInMemoryStorage_Get(t *testing.T) {
 				store: store,
 			}
 
-			got, err := i.Get(tt.key)
+			got, err := i.Get(context.Background(), tt.key)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

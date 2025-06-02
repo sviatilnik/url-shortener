@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"context"
 	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
@@ -24,12 +25,12 @@ func NewShortener(store storages.URLStorage, generator generators.Generator, con
 	}
 }
 
-func (s *Shortener) GetFullLinkByShortCode(shortCode string) (string, error) {
+func (s *Shortener) GetFullLinkByShortCode(ctx context.Context, shortCode string) (string, error) {
 	if strings.TrimSpace(shortCode) == "" {
 		return "", ErrIDIsRequired
 	}
 
-	link, err := s.storage.Get(shortCode)
+	link, err := s.storage.Get(ctx, shortCode)
 	if err != nil {
 		return "", err
 	}
@@ -37,18 +38,15 @@ func (s *Shortener) GetFullLinkByShortCode(shortCode string) (string, error) {
 	return link.OriginalURL, nil
 }
 
-func (s *Shortener) GenerateShortLink(url string) (string, error) {
+func (s *Shortener) GenerateShortLink(ctx context.Context, url string) (string, error) {
 	if !util.IsURL(url) {
 		return "", ErrInvalidURL
 	}
 
 	link := &models.Link{}
 	var saveErr error
-	attemptsLeft := 10
-	for {
-		if attemptsLeft <= 0 {
-			break
-		}
+	var savedLink *models.Link
+	for attemptsLeft := 10; attemptsLeft > 0; attemptsLeft-- {
 		short, err := s.generator.Get(url)
 		if err != nil {
 			return "", err
@@ -58,7 +56,7 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 		link.ShortCode = short
 		link.OriginalURL = url
 
-		savedLink, err := s.storage.Save(link)
+		savedLink, err = s.storage.Save(ctx, link)
 		if err == nil {
 			break
 		}
@@ -68,18 +66,16 @@ func (s *Shortener) GenerateShortLink(url string) (string, error) {
 			saveErr = ErrLinkConflict
 			break
 		}
-
-		attemptsLeft--
 	}
 
-	if attemptsLeft <= 0 {
+	if savedLink == nil {
 		return "", ErrCreateShortLink
 	}
 
 	return s.getShortBase() + "/" + link.ShortCode, saveErr
 }
 
-func (s *Shortener) GenerateBatchShortLink(links []models.Link) ([]*models.Link, error) {
+func (s *Shortener) GenerateBatchShortLink(ctx context.Context, links []models.Link) ([]*models.Link, error) {
 	validLinks := make([]*models.Link, 0)
 
 	if len(links) == 0 {
@@ -105,7 +101,7 @@ func (s *Shortener) GenerateBatchShortLink(links []models.Link) ([]*models.Link,
 		return nil, ErrNoValidLinksInBatch
 	}
 
-	err := s.storage.BatchSave(validLinks)
+	err := s.storage.BatchSave(ctx, validLinks)
 	if err != nil {
 		return nil, err
 	}

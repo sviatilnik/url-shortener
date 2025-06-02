@@ -7,19 +7,14 @@ import (
 	"time"
 )
 
-func PingHandler(conn *sql.DB) http.HandlerFunc {
+func PingDBHandler(conn *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		if conn == nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		if err := conn.PingContext(ctx); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

@@ -22,7 +22,7 @@ func GetShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		}
 
 		status := http.StatusCreated
-		shortLink, err := shorter.GenerateShortLink(strings.TrimSuffix(string(url), "\n"))
+		shortLink, err := shorter.GenerateShortLink(r.Context(), strings.TrimSuffix(string(url), "\n"))
 		if err != nil {
 			//log.Println(err)
 			if errors.Is(err, shortener.ErrLinkConflict) {
@@ -34,6 +34,6 @@ func GetShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		}
 
 		w.WriteHeader(status)
-		_, _ = w.Write([]byte(shortLink))
+		w.Write([]byte(shortLink))
 	}
 }

@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/jackc/pgerrcode"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"log"
 	"strings"
 )
 
@@ -21,35 +19,37 @@ func NewPostgresStorageStorage(db *sql.DB) InitableStorage {
 	return postgresStorage
 }
 
-func (p *PostgresStorage) Save(link *models.Link) (*models.Link, error) {
+func (p *PostgresStorage) Save(ctx context.Context, link *models.Link) (*models.Link, error) {
 	if strings.TrimSpace(link.ID) == "" {
 		return nil, ErrEmptyKey
 	}
-	_, err := p.db.ExecContext(
-		context.Background(),
-		"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
+
+	res, err := p.db.ExecContext(
+		ctx,
+		"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3) ON CONFLICT(\"originalURL\") DO NOTHING",
 		link.ID, link.OriginalURL, link.ShortCode)
 
 	if err != nil {
-		if strings.Contains(err.Error(), pgerrcode.UniqueViolation) {
-			return p.GetByOriginalURL(link.OriginalURL), ErrOriginalURLAlreadyExists
-		}
+		return nil, err
+	}
+
+	if c, _ := res.RowsAffected(); c != 1 {
+		return p.GetByOriginalURL(ctx, link.OriginalURL), ErrOriginalURLAlreadyExists
 	}
 
 	return link, err
 }
 
-func (p *PostgresStorage) BatchSave(links []*models.Link) error {
+func (p *PostgresStorage) BatchSave(ctx context.Context, links []*models.Link) error {
 	tx, err := p.db.Begin()
-	log.Println(err)
 	if err != nil {
 		return err
 	}
 
 	for _, link := range links {
 		if p.isLinkExists(link.ID) {
-			_, err = p.db.ExecContext(
-				context.Background(),
+			_, err = tx.ExecContext(
+				ctx,
 				"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
 				link.OriginalURL, link.ShortCode, link.ID)
 			if err != nil {
@@ -59,7 +59,7 @@ func (p *PostgresStorage) BatchSave(links []*models.Link) error {
 			continue
 		}
 		_, err = tx.ExecContext(
-			context.Background(),
+			ctx,
 			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
 			link.ID, link.OriginalURL, link.ShortCode)
 		if err != nil {
@@ -76,7 +76,7 @@ func (p *PostgresStorage) BatchSave(links []*models.Link) error {
 	return nil
 }
 
-func (p *PostgresStorage) Get(shortCode string) (*models.Link, error) {
+func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Link, error) {
 	var row struct {
 		uuid        string
 		originalURL string
@@ -84,11 +84,10 @@ func (p *PostgresStorage) Get(shortCode string) (*models.Link, error) {
 	}
 
 	err := p.db.QueryRowContext(
-		context.Background(),
+		ctx,
 		`SELECT "uuid", "originalURL",  "shortCode" 
 				FROM link 
-				WHERE "shortCode"=$1 
-				ORDER BY "createdAt" DESC LIMIT 1`,
+				WHERE "shortCode"=$1`,
 		shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrKeyNotFound
@@ -134,7 +133,7 @@ func (p *PostgresStorage) Init() error {
 	return err
 }
 
-func (p *PostgresStorage) GetByOriginalURL(originalURL string) *models.Link {
+func (p *PostgresStorage) GetByOriginalURL(ctx context.Context, originalURL string) *models.Link {
 	var row struct {
 		uuid        string
 		originalURL string
@@ -142,7 +141,7 @@ func (p *PostgresStorage) GetByOriginalURL(originalURL string) *models.Link {
 	}
 
 	err := p.db.QueryRowContext(
-		context.Background(),
+		ctx,
 		`SELECT "uuid", "originalURL",  "shortCode" 
 				FROM link 
 				WHERE "originalURL"=$1 

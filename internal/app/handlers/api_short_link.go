@@ -36,7 +36,7 @@ func APIShortLinkHandler(short *shortener.Shortener) http.HandlerFunc {
 		}
 
 		status := http.StatusCreated
-		shortLink, err := short.GenerateShortLink(req.URL)
+		shortLink, err := short.GenerateShortLink(r.Context(), req.URL)
 		if err != nil {
 			if errors.Is(err, shortener.ErrLinkConflict) {
 				status = http.StatusConflict

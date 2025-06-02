@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
@@ -13,7 +14,7 @@ import (
 func TestShortener_GetFullLinkByID(t *testing.T) {
 
 	i := storages.NewInMemoryStorage()
-	_, err := i.Save(&models.Link{
+	_, err := i.Save(context.Background(), &models.Link{
 		ID:          "test",
 		ShortCode:   "test",
 		OriginalURL: "http://google.com",
@@ -67,7 +68,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			shortener := NewShortener(tt.storage, tt.generator, tt.conf)
-			got, err := shortener.GetFullLinkByShortCode(tt.shortCode)
+			got, err := shortener.GetFullLinkByShortCode(context.Background(), tt.shortCode)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -121,7 +122,7 @@ func TestShortener_GenerateShortLink(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewShortener(tt.storage, tt.generator, tt.conf)
-			got, err := s.GenerateShortLink(tt.url)
+			got, err := s.GenerateShortLink(context.Background(), tt.url)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

@@ -31,9 +31,11 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
+	if connection != nil {
+		r.Get("/ping", handlers.PingDBHandler(connection))
+	}
 	r.Post("/", handlers.GetShortLinkHandler(shorter))
 	r.Get("/{short_code}", handlers.RedirectToFullLinkHandler(shorter))
-	r.Get("/ping", handlers.PingHandler(connection))
 	r.Post("/api/shorten", handlers.APIShortLinkHandler(shorter))
 	r.Post("/api/shorten/batch", handlers.BatchShortLinkHandler(shorter))
 

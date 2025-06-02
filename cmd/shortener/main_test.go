@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
@@ -208,7 +209,7 @@ func TestRedirectToFullLinkHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			if test.shortLink == "" {
-				short, err := shorter.GenerateShortLink(test.fullLink)
+				short, err := shorter.GenerateShortLink(context.Background(), test.fullLink)
 				assert.NoError(t, err)
 				test.shortLink = short
 				assert.NotEmpty(t, test.shortLink)
