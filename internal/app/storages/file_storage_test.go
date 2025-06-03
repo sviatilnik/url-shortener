@@ -10,29 +10,20 @@ import (
 )
 
 func TestFileStorage_BatchSave(t *testing.T) {
-	type fields struct {
-		filePath string
-		lastUUID int
-		mut      sync.RWMutex
-	}
 	type args struct {
 		links []*models.Link
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name     string
+		filePath string
+		args     args
+		wantErr  assert.ErrorAssertionFunc
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := &FileStorage{
-				filePath: tt.fields.filePath,
-				lastUUID: tt.fields.lastUUID,
-				mut:      tt.fields.mut,
-			}
+			f := NewFileStorage(tt.filePath)
 			tt.wantErr(t, f.BatchSave(context.Background(), tt.args.links), fmt.Sprintf("BatchSave(%v)", tt.args.links))
 		})
 	}
@@ -48,21 +39,17 @@ func TestFileStorage_Get(t *testing.T) {
 		shortCode string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *models.Link
-		wantErr assert.ErrorAssertionFunc
+		name     string
+		filePath string
+		args     args
+		want     *models.Link
+		wantErr  assert.ErrorAssertionFunc
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := &FileStorage{
-				filePath: tt.fields.filePath,
-				lastUUID: tt.fields.lastUUID,
-				mut:      tt.fields.mut,
-			}
+			f := NewFileStorage(tt.filePath)
 			got, err := f.Get(context.Background(), tt.args.shortCode)
 			if !tt.wantErr(t, err, fmt.Sprintf("Get(%v)", tt.args.shortCode)) {
 				return
@@ -73,30 +60,21 @@ func TestFileStorage_Get(t *testing.T) {
 }
 
 func TestFileStorage_Save(t *testing.T) {
-	type fields struct {
-		filePath string
-		lastUUID int
-		mut      sync.RWMutex
-	}
 	type args struct {
 		link *models.Link
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *models.Link
-		wantErr assert.ErrorAssertionFunc
+		name     string
+		filePath string
+		args     args
+		want     *models.Link
+		wantErr  assert.ErrorAssertionFunc
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := &FileStorage{
-				filePath: tt.fields.filePath,
-				lastUUID: tt.fields.lastUUID,
-				mut:      tt.fields.mut,
-			}
+			f := NewFileStorage(tt.filePath)
 			got, err := f.Save(context.Background(), tt.args.link)
 			if !tt.wantErr(t, err, fmt.Sprintf("Save(%v)", tt.args.link)) {
 				return

@@ -123,7 +123,7 @@ func TestPostgresStorage_Init(t *testing.T) {
 			p := &PostgresStorage{
 				db: tt.fields.db,
 			}
-			tt.wantErr(t, p.Init(), fmt.Sprintf("Init()"))
+			tt.wantErr(t, p.Init(), "Init()")
 		})
 	}
 }
