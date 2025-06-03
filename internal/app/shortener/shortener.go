@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"github.com/sviatilnik/url-shortener/internal/app/util"
 	"strings"
@@ -14,10 +13,10 @@ import (
 type Shortener struct {
 	storage   storages.URLStorage
 	generator generators.Generator
-	conf      config.ShortenerConfig
+	conf      Config
 }
 
-func NewShortener(store storages.URLStorage, generator generators.Generator, conf config.ShortenerConfig) *Shortener {
+func NewShortener(store storages.URLStorage, generator generators.Generator, conf Config) *Shortener {
 	return &Shortener{
 		storage:   store,
 		generator: generator,
@@ -46,26 +45,20 @@ func (s *Shortener) GenerateShortLink(ctx context.Context, url string) (string, 
 	link := &models.Link{}
 	var saveErr error
 	var savedLink *models.Link
-	for attemptsLeft := 10; attemptsLeft > 0; attemptsLeft-- {
-		short, err := s.generator.Get(url)
-		if err != nil {
-			return "", err
-		}
+	short, err := s.generator.Get(url)
+	if err != nil {
+		return "", err
+	}
 
-		link.ID = short
-		link.ShortCode = short
-		link.OriginalURL = url
+	link.ID = short
+	link.ShortCode = short
+	link.OriginalURL = url
 
-		savedLink, err = s.storage.Save(ctx, link)
-		if err == nil {
-			break
-		}
+	savedLink, err = s.storage.Save(ctx, link)
 
-		if errors.Is(err, storages.ErrOriginalURLAlreadyExists) {
-			link.ShortCode = savedLink.ShortCode
-			saveErr = ErrLinkConflict
-			break
-		}
+	if errors.Is(err, storages.ErrOriginalURLAlreadyExists) {
+		link.ShortCode = savedLink.ShortCode
+		saveErr = ErrLinkConflict
 	}
 
 	if savedLink == nil {
@@ -115,6 +108,6 @@ func (s *Shortener) GenerateBatchShortLink(ctx context.Context, links []models.L
 }
 
 func (s *Shortener) getShortBase() string {
-	urlBase := s.conf.GetParamValue("urlBase", "http://localhost/").(string)
+	urlBase := s.conf.BaseURL
 	return strings.TrimRight(urlBase, "/")
 }

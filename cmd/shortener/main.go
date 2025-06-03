@@ -11,7 +11,6 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/logger"
 	"github.com/sviatilnik/url-shortener/internal/app/middlewares"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
-	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"net/http"
 	"time"
@@ -26,7 +25,8 @@ func main() {
 		log.Info("Failed to connect to database")
 	}
 
-	shorter := getShortener(conf.ShortURLHost, connection, &conf)
+	storage := getStorage(connection, &conf)
+	shorter := getShortener(conf.ShortURLHost, storage)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
@@ -45,11 +45,12 @@ func main() {
 	}
 }
 
-func getShortener(baseURL string, db *sql.DB, config *config.Config) *shortener.Shortener {
-	conf := shortenerConfig.NewShortenerConfig()
-	_ = conf.SetURLBase(baseURL)
-
-	return shortener.NewShortener(getStorage(db, config), generators.NewRandomGenerator(10), conf)
+func getShortener(baseURL string, storage storages.URLStorage) *shortener.Shortener {
+	return shortener.NewShortener(
+		storage,
+		generators.NewRandomGenerator(10),
+		shortener.NewShortenerConfig(baseURL),
+	)
 }
 
 func getStorage(db *sql.DB, config *config.Config) storages.URLStorage {
@@ -80,7 +81,7 @@ func getDBConnection(config *config.Config) (*sql.DB, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	if err = conn.PingContext(ctx); err != nil {

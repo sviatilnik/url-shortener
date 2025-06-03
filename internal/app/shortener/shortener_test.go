@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"testing"
 )
@@ -27,7 +26,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 		name      string
 		storage   storages.URLStorage
 		generator generators.Generator
-		conf      config.ShortenerConfig
+		conf      Config
 		shortCode string
 		want      string
 		wantErr   bool
@@ -36,7 +35,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			name:      "#1",
 			storage:   i,
 			generator: generators.NewRandomGenerator(10),
-			conf:      config.NewShortenerConfig(),
+			conf:      NewShortenerConfig(""),
 			shortCode: "test",
 			want:      "http://google.com",
 		},
@@ -44,7 +43,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			name:      "#2",
 			storage:   i,
 			generator: generators.NewRandomGenerator(10),
-			conf:      config.NewShortenerConfig(),
+			conf:      NewShortenerConfig(""),
 			shortCode: "test3",
 			wantErr:   true,
 		},
@@ -52,7 +51,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			name:      "#3",
 			storage:   storages.NewInMemoryStorage(),
 			generator: generators.NewRandomGenerator(10),
-			conf:      config.NewShortenerConfig(),
+			conf:      NewShortenerConfig(""),
 			shortCode: "test",
 			wantErr:   true,
 		},
@@ -60,7 +59,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 			name:      "#4",
 			storage:   storages.NewInMemoryStorage(),
 			generator: generators.NewRandomGenerator(10),
-			conf:      config.NewShortenerConfig(),
+			conf:      NewShortenerConfig(""),
 			shortCode: " ",
 			wantErr:   true,
 		},
@@ -81,15 +80,13 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 
 func TestShortener_GenerateShortLink(t *testing.T) {
 
-	baseURL := "http://google.com/"
-	con := config.NewShortenerConfig()
-	con.SetURLBase(baseURL)
+	con := NewShortenerConfig("http://google.com/")
 
 	tests := []struct {
 		name      string
 		storage   storages.URLStorage
 		generator generators.Generator
-		conf      config.ShortenerConfig
+		conf      Config
 		url       string
 		wantLen   int
 		wantErr   bool
@@ -100,7 +97,7 @@ func TestShortener_GenerateShortLink(t *testing.T) {
 			generator: generators.NewRandomGenerator(10),
 			conf:      con,
 			url:       "http://google.com",
-			wantLen:   10 + len(baseURL),
+			wantLen:   10 + len("http://google.com/"),
 		},
 		{
 			name:      "#2",

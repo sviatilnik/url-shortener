@@ -7,7 +7,6 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/handlers"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
-	shortenerConfig "github.com/sviatilnik/url-shortener/internal/app/shortener/config"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"io"
 	"net/http"
@@ -16,12 +15,10 @@ import (
 	"testing"
 )
 
-var testBaseURL string = "http://my-awesome-shotener.com/"
+var testBaseURL = "http://my-awesome-shotener.com/"
 
 func getTestShortener() *shortener.Shortener {
-	conf := shortenerConfig.NewShortenerConfig()
-	_ = conf.SetURLBase(testBaseURL)
-	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), conf)
+	return shortener.NewShortener(storages.NewInMemoryStorage(), generators.NewRandomGenerator(10), shortener.NewShortenerConfig(testBaseURL))
 }
 
 func TestGetShortLinkHandler(t *testing.T) {
