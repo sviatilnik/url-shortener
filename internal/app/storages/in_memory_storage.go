@@ -21,36 +21,40 @@ func (i InMemoryStorage) Save(ctx context.Context, link *models.Link) (*models.L
 		return nil, ErrEmptyKey
 	}
 
-	i.store[link.ID] = link.OriginalURL
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
+		i.store[link.ID] = link.OriginalURL
 		return link, nil
 	}
 }
 
 func (i InMemoryStorage) BatchSave(ctx context.Context, links []*models.Link) error {
-	for _, link := range links {
-		if _, err := i.Save(ctx, link); err != nil {
-			return err
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		for _, link := range links {
+			if _, err := i.Save(ctx, link); err != nil {
+				return err
+			}
 		}
+		return nil
 	}
-
-	return nil
 }
 
 func (i InMemoryStorage) Get(ctx context.Context, shortCode string) (*models.Link, error) {
-	_, ok := i.store[shortCode]
-
-	if !ok {
-		return nil, ErrKeyNotFound
-	}
-
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
+		_, ok := i.store[shortCode]
+
+		if !ok {
+			return nil, ErrKeyNotFound
+		}
+
 		return &models.Link{
 			ID:          shortCode,
 			OriginalURL: i.store[shortCode],

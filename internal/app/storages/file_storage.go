@@ -55,7 +55,7 @@ func (f *FileStorage) Save(ctx context.Context, link *models.Link) (*models.Link
 			return nil, err
 		}
 
-		if _, err := file.Write(marshal); err != nil {
+		if _, err = file.Write(marshal); err != nil {
 			return nil, err
 		}
 
