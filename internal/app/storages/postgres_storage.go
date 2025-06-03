@@ -26,7 +26,9 @@ func (p *PostgresStorage) Save(ctx context.Context, link *models.Link) (*models.
 
 	res, err := p.db.ExecContext(
 		ctx,
-		"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3) ON CONFLICT(\"originalURL\") DO NOTHING",
+		`INSERT INTO link ("uuid", "originalURL", "shortCode") 
+				VALUES ($1, $2, $3) 
+				ON CONFLICT("originalURL") DO NOTHING`,
 		link.ID, link.OriginalURL, link.ShortCode)
 
 	if err != nil {
@@ -47,20 +49,11 @@ func (p *PostgresStorage) BatchSave(ctx context.Context, links []*models.Link) e
 	}
 
 	for _, link := range links {
-		if p.isLinkExists(link.ID) {
-			_, err = tx.ExecContext(
-				ctx,
-				"UPDATE link SET \"originalURL\"=$1, \"shortCode\"=$2 WHERE \"uuid\"=$3",
-				link.OriginalURL, link.ShortCode, link.ID)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-			continue
-		}
 		_, err = tx.ExecContext(
 			ctx,
-			"INSERT INTO link (\"uuid\", \"originalURL\", \"shortCode\") VALUES ($1, $2, $3)",
+			`INSERT INTO link ("uuid", "originalURL", "shortCode") 
+				    VALUES ($1, $2, $3) 
+                    ON CONFLICT("uuid") DO UPDATE SET "originalURL" = $2, "shortCode" = $3`,
 			link.ID, link.OriginalURL, link.ShortCode)
 		if err != nil {
 			tx.Rollback()

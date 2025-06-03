@@ -48,6 +48,7 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -69,10 +70,6 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write(encodedResp)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		w.Write(encodedResp)
 	}
 }
