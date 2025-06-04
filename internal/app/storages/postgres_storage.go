@@ -97,21 +97,6 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 	}, nil
 }
 
-func (p *PostgresStorage) isLinkExists(id string) bool {
-	var dummy interface{}
-	row := p.db.QueryRowContext(context.Background(), "SELECT 1 FROM link WHERE \"uuid\"=$1 ", id)
-	err := row.Scan(&dummy)
-
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return false
-	case err != nil:
-		return false
-	}
-
-	return true
-}
-
 func (p *PostgresStorage) Init() error {
 	_, err := p.db.ExecContext(context.Background(),
 		`CREATE TABLE IF NOT EXISTS link(

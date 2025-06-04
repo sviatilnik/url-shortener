@@ -157,28 +157,3 @@ func TestPostgresStorage_Save(t *testing.T) {
 		})
 	}
 }
-
-func TestPostgresStorage_isLinkExists(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		id string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &PostgresStorage{
-				db: tt.fields.db,
-			}
-			assert.Equalf(t, tt.want, p.isLinkExists(tt.args.id), "isLinkExists(%v)", tt.args.id)
-		})
-	}
-}
