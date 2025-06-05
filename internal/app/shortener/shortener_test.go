@@ -3,24 +3,27 @@ package shortener
 import (
 	"context"
 	"fmt"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
+	"github.com/sviatilnik/url-shortener/internal/app/storages/mock_storages"
 	"testing"
 )
 
 func TestShortener_GetFullLinkByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	i := storages.NewInMemoryStorage()
-	_, err := i.Save(context.Background(), &models.Link{
+	mockStorage := mock_storages.NewMockURLStorage(ctrl)
+	mockStorage.EXPECT().Get(context.Background(), "test").Return(&models.Link{
 		ID:          "test",
 		ShortCode:   "test",
 		OriginalURL: "http://google.com",
-	})
-	if err != nil {
-		assert.NoError(t, err)
-	}
+	}, nil).AnyTimes()
+
+	mockStorage.EXPECT().Get(context.Background(), gomock.Any()).Return(nil, storages.ErrKeyNotFound).AnyTimes()
 
 	tests := []struct {
 		name      string
@@ -33,7 +36,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 	}{
 		{
 			name:      "#1",
-			storage:   i,
+			storage:   mockStorage,
 			generator: generators.NewRandomGenerator(10),
 			conf:      NewShortenerConfig(""),
 			shortCode: "test",
@@ -41,7 +44,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 		},
 		{
 			name:      "#2",
-			storage:   i,
+			storage:   mockStorage,
 			generator: generators.NewRandomGenerator(10),
 			conf:      NewShortenerConfig(""),
 			shortCode: "test3",
@@ -49,15 +52,15 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 		},
 		{
 			name:      "#3",
-			storage:   storages.NewInMemoryStorage(),
+			storage:   mockStorage,
 			generator: generators.NewRandomGenerator(10),
 			conf:      NewShortenerConfig(""),
-			shortCode: "test",
+			shortCode: "test15",
 			wantErr:   true,
 		},
 		{
 			name:      "#4",
-			storage:   storages.NewInMemoryStorage(),
+			storage:   mockStorage,
 			generator: generators.NewRandomGenerator(10),
 			conf:      NewShortenerConfig(""),
 			shortCode: " ",
