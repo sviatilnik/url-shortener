@@ -14,11 +14,20 @@ func TestConfig(t *testing.T) {
 
 	os.Args = []string{
 		os.Args[0],
-		"-a=https://google.com",
-		"-d=database_dsn",
+		"-tta=https://google.com",
+		"-ttd=database_dsn",
 	}
 
-	config := NewConfig(&DefaultProvider{}, &FlagProvider{}, NewEnvProvider(getMockEnvGetter(t)))
+	config := NewConfig(
+		&DefaultProvider{},
+		&FlagProvider{
+			HostFlagName:            "tta",
+			ShortURLFlagName:        "ttb",
+			FileStoragePathFlagName: "ttf",
+			DatabaseDSNFlagName:     "ttd",
+		},
+		NewEnvProvider(getMockEnvGetter(t)),
+	)
 
 	assert.Equal(t, "https://google.com", config.Host)               // from flag provider
 	assert.Equal(t, "https://short.google.com", config.ShortURLHost) // from env provider

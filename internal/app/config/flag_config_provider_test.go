@@ -12,12 +12,17 @@ func TestFlagProvider(t *testing.T) {
 
 	os.Args = []string{
 		os.Args[0],
-		"-a=https://google.com",
-		"-b=https://short.google.com",
-		"-f=/tmp/file_storage",
-		"-d=database_dsn",
+		"-ta=https://google.com",
+		"-tb=https://short.google.com",
+		"-tf=/tmp/file_storage",
+		"-td=database_dsn",
 	}
-	config := NewConfig(&FlagProvider{})
+	config := NewConfig(&FlagProvider{
+		HostFlagName:            "ta",
+		ShortURLFlagName:        "tb",
+		FileStoragePathFlagName: "tf",
+		DatabaseDSNFlagName:     "td",
+	})
 
 	assert.Equal(t, "https://google.com", config.Host)
 	assert.Equal(t, "https://short.google.com", config.ShortURLHost)

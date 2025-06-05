@@ -74,7 +74,7 @@ func getStorage(db *sql.DB, config *config.Config) storages.URLStorage {
 func getConfig() config.Config {
 	return config.NewConfig(
 		&config.DefaultProvider{},
-		&config.FlagProvider{},
+		config.NewFlagProvider(),
 		config.NewEnvProvider(&config.OSEnvGetter{}),
 	)
 }
