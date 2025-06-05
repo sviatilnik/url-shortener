@@ -43,7 +43,7 @@ func (p *PostgresStorage) Save(ctx context.Context, link *models.Link) (*models.
 }
 
 func (p *PostgresStorage) BatchSave(ctx context.Context, links []*models.Link) error {
-	if links == nil || len(links) == 0 {
+	if len(links) == 0 {
 		return ErrBatchIsEmpty
 	}
 

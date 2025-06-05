@@ -71,7 +71,7 @@ func (f *FileStorage) BatchSave(ctx context.Context, links []*models.Link) error
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if links == nil || len(links) == 0 {
+		if len(links) == 0 {
 			return ErrBatchIsEmpty
 		}
 

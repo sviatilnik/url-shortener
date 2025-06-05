@@ -35,7 +35,7 @@ func (i InMemoryStorage) BatchSave(ctx context.Context, links []*models.Link) er
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if links == nil || len(links) == 0 {
+		if len(links) == 0 {
 			return ErrBatchIsEmpty
 		}
 		for _, link := range links {
