@@ -2,102 +2,188 @@ package storages
 
 import (
 	"context"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"sync"
+	"os"
 	"testing"
 )
 
 func TestFileStorage_BatchSave(t *testing.T) {
-	type args struct {
-		links []*models.Link
-	}
+	file, tmpCreateErr := os.CreateTemp("", "test_file_storage")
+	assert.NoError(t, tmpCreateErr)
+
 	tests := []struct {
 		name     string
 		filePath string
-		args     args
-		wantErr  assert.ErrorAssertionFunc
+		links    []*models.Link
+		wantErr  bool
 	}{
-		// TODO: Add test cases.
+		{
+			name:     "#1",
+			filePath: file.Name(),
+			links: []*models.Link{
+				{
+					ID:          "1",
+					ShortCode:   "short_code1",
+					OriginalURL: "original_url1",
+				},
+				{
+					ID:          "2",
+					ShortCode:   "short_code2",
+					OriginalURL: "original_url2",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:     "#2",
+			filePath: file.Name(),
+			links:    nil,
+			wantErr:  true,
+		},
+		{
+			name:     "#3",
+			filePath: "",
+			links: []*models.Link{
+				{
+					ID:          "1",
+					ShortCode:   "short_code1",
+					OriginalURL: "original_url1",
+				},
+				{
+					ID:          "2",
+					ShortCode:   "short_code2",
+					OriginalURL: "original_url2",
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := NewFileStorage(tt.filePath)
-			tt.wantErr(t, f.BatchSave(context.Background(), tt.args.links), fmt.Sprintf("BatchSave(%v)", tt.args.links))
+
+			err := f.BatchSave(t.Context(), tt.links)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
+
+	t.Cleanup(func() {
+		os.Remove(file.Name())
+	})
 }
 
 func TestFileStorage_Get(t *testing.T) {
-	type fields struct {
-		filePath string
-		lastUUID int
-		mut      sync.RWMutex
-	}
-	type args struct {
-		shortCode string
-	}
+	file, tmpCreateErr := os.CreateTemp("", "test_file_storage")
+	assert.NoError(t, tmpCreateErr)
+
+	_, writeErr := file.Write([]byte("{\"uuid\":\"1\",\"short\":\"short_code\",\"original_url\":\"original_url\"}"))
+	assert.NoError(t, writeErr)
+
 	tests := []struct {
-		name     string
-		filePath string
-		args     args
-		want     *models.Link
-		wantErr  assert.ErrorAssertionFunc
+		name      string
+		filePath  string
+		shortCode string
+		want      *models.Link
+		wantErr   bool
 	}{
-		// TODO: Add test cases.
+		{
+			name:      "#1",
+			filePath:  file.Name(),
+			shortCode: "short_code",
+			want: &models.Link{
+				ID:          "1",
+				ShortCode:   "short_code",
+				OriginalURL: "original_url",
+			},
+			wantErr: false,
+		},
+		{
+			name:      "#2",
+			filePath:  "",
+			shortCode: "short_code",
+			want:      nil,
+			wantErr:   true,
+		},
+		{
+			name:      "#3",
+			filePath:  file.Name(),
+			shortCode: "",
+			want:      nil,
+			wantErr:   false,
+		},
+		{
+			name:      "#4",
+			filePath:  file.Name(),
+			shortCode: "short_code2",
+			want:      nil,
+			wantErr:   false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := NewFileStorage(tt.filePath)
-			got, err := f.Get(context.Background(), tt.args.shortCode)
-			if !tt.wantErr(t, err, fmt.Sprintf("Get(%v)", tt.args.shortCode)) {
-				return
+			got, err := f.Get(context.Background(), tt.shortCode)
+			assert.Equal(t, tt.want, got)
+			if tt.wantErr {
+				assert.Error(t, err)
 			}
-			assert.Equalf(t, tt.want, got, "Get(%v)", tt.args.shortCode)
 		})
 	}
+
+	t.Cleanup(func() {
+		os.Remove(file.Name())
+	})
 }
 
 func TestFileStorage_Save(t *testing.T) {
-	type args struct {
-		link *models.Link
-	}
+	file, tmpCreateErr := os.CreateTemp("", "test_file_storage")
+	assert.NoError(t, tmpCreateErr)
+
 	tests := []struct {
 		name     string
 		filePath string
-		args     args
-		want     *models.Link
-		wantErr  assert.ErrorAssertionFunc
+		link     *models.Link
+		wantErr  bool
 	}{
-		// TODO: Add test cases.
+		{
+			name:     "#1",
+			filePath: file.Name(),
+			link: &models.Link{
+				ID:          "1",
+				ShortURL:    "",
+				ShortCode:   "short_code",
+				OriginalURL: "original_url",
+			},
+			wantErr: false,
+		},
+		{
+			name:     "#2",
+			filePath: "",
+			link:     &models.Link{},
+			wantErr:  true,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := NewFileStorage(tt.filePath)
-			got, err := f.Save(context.Background(), tt.args.link)
-			if !tt.wantErr(t, err, fmt.Sprintf("Save(%v)", tt.args.link)) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "Save(%v)", tt.args.link)
-		})
-	}
-}
+			_, err := f.Save(context.Background(), tt.link)
 
-func TestNewFileStorage(t *testing.T) {
-	type args struct {
-		filePath string
-	}
-	tests := []struct {
-		name string
-		args args
-		want *FileStorage
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, NewFileStorage(tt.args.filePath), "NewFileStorage(%v)", tt.args.filePath)
+			if tt.wantErr && err != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
+
+	t.Cleanup(func() {
+		os.Remove(file.Name())
+	})
 }
