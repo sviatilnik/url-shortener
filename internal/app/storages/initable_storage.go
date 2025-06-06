@@ -1,6 +1,8 @@
 package storages
 
+import "context"
+
 type InitableStorage interface {
 	URLStorage
-	Init() error
+	Init(ctx context.Context) error
 }

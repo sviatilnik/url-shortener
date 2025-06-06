@@ -9,12 +9,20 @@ import (
 )
 
 type PostgresStorage struct {
-	db *sql.DB
+	db        *sql.DB
+	tableName string
 }
 
-func NewPostgresStorageStorage(db *sql.DB) InitableStorage {
+func NewPostgresStorageStorage(db *sql.DB, tableName string) InitableStorage {
 	postgresStorage := new(PostgresStorage)
 	postgresStorage.db = db
+
+	if strings.TrimSpace(tableName) != "" {
+		tableName = strings.TrimSpace(tableName)
+	} else {
+		tableName = "links"
+	}
+	postgresStorage.tableName = tableName
 
 	return postgresStorage
 }
@@ -26,7 +34,7 @@ func (p *PostgresStorage) Save(ctx context.Context, link *models.Link) (*models.
 
 	res, err := p.db.ExecContext(
 		ctx,
-		`INSERT INTO link ("uuid", "originalURL", "shortCode") 
+		`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode") 
 				VALUES ($1, $2, $3) 
 				ON CONFLICT("originalURL") DO NOTHING`,
 		link.ID, link.OriginalURL, link.ShortCode)
@@ -55,7 +63,7 @@ func (p *PostgresStorage) BatchSave(ctx context.Context, links []*models.Link) e
 	for _, link := range links {
 		_, err = tx.ExecContext(
 			ctx,
-			`INSERT INTO link ("uuid", "originalURL", "shortCode") 
+			`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode") 
 				    VALUES ($1, $2, $3) 
                     ON CONFLICT("uuid") DO UPDATE SET "originalURL" = $2, "shortCode" = $3`,
 			link.ID, link.OriginalURL, link.ShortCode)
@@ -83,9 +91,9 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 	err := p.db.QueryRowContext(
 		ctx,
 		`SELECT "uuid", "originalURL",  "shortCode" 
-				FROM link 
-				WHERE "shortCode"=$1`,
-		shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode)
+				FROM `+p.tableName+` 
+				WHERE "shortCode"=$2`,
+		p.tableName, shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrKeyNotFound
 	}
@@ -101,17 +109,21 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 	}, nil
 }
 
-func (p *PostgresStorage) Init() error {
-	_, err := p.db.ExecContext(context.Background(),
-		`CREATE TABLE IF NOT EXISTS link(
+func (p *PostgresStorage) Init(ctx context.Context) error {
+	_, err := p.db.ExecContext(ctx,
+		`CREATE TABLE IF NOT EXISTS `+p.tableName+` (
     "uuid" character varying(255) NOT NULL,
     "originalURL" character varying(512) NOT NULL,
     "shortCode" character varying(255) NOT NULL,
     "createdAt" timestamp with time zone NOT NULL DEFAULT NOW(),
     PRIMARY KEY ("uuid"));
-    CREATE INDEX IF NOT EXISTS "idx_link_shortCode" ON link ("shortCode");
-	CREATE UNIQUE INDEX IF NOT EXISTS  "idx_link_originalUrl" ON link ("originalURL");
-`)
+    CREATE INDEX IF NOT EXISTS "idx_link_shortCode" ON `+p.tableName+` ("shortCode");
+	CREATE UNIQUE INDEX IF NOT EXISTS  "idx_link_originalUrl" ON `+p.tableName+` ("originalURL");`)
+	return err
+}
+
+func (p *PostgresStorage) Drop(ctx context.Context) error {
+	_, err := p.db.ExecContext(ctx, `DROP TABLE IF EXISTS `+p.tableName+`;`)
 	return err
 }
 
@@ -125,7 +137,7 @@ func (p *PostgresStorage) GetByOriginalURL(ctx context.Context, originalURL stri
 	err := p.db.QueryRowContext(
 		ctx,
 		`SELECT "uuid", "originalURL",  "shortCode" 
-				FROM link 
+				FROM `+p.tableName+` 
 				WHERE "originalURL"=$1 
 				ORDER BY "createdAt" DESC LIMIT 1`,
 		originalURL).Scan(&row.uuid, &row.originalURL, &row.shortCode)

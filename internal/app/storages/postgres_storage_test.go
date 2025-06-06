@@ -9,47 +9,68 @@ import (
 	"testing"
 )
 
-func TestNewPostgresStorageStorage(t *testing.T) {
-	type args struct {
-		db *sql.DB
-	}
-	tests := []struct {
-		name string
-		args args
-		want InitableStorage
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, NewPostgresStorageStorage(tt.args.db), "NewPostgresStorageStorage(%v)", tt.args.db)
-		})
-	}
-}
-
 func TestPostgresStorage_BatchSave(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		links []*models.Link
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &PostgresStorage{
-				db: tt.fields.db,
-			}
-			tt.wantErr(t, p.BatchSave(context.Background(), tt.args.links), fmt.Sprintf("BatchSave(%v)", tt.args.links))
-		})
-	}
+
+	//storage := NewPostgresStorageStorage(nil, "links_test")
+	//tests := []struct {
+	//	name     string
+	//	links    []*models.Link
+	//	wantErr  bool
+	//}{
+	//	{
+	//		name:     "#1",
+	//		links: []*models.Link{
+	//			{
+	//				ID:          "1",
+	//				ShortCode:   "short_code1",
+	//				OriginalURL: "original_url1",
+	//			},
+	//			{
+	//				ID:          "2",
+	//				ShortCode:   "short_code2",
+	//				OriginalURL: "original_url2",
+	//			},
+	//		},
+	//		wantErr: false,
+	//	},
+	//	{
+	//		name:     "#2",
+	//		links:    nil,
+	//		wantErr:  true,
+	//	},
+	//	{
+	//		name:     "#3",
+	//		links: []*models.Link{
+	//			{
+	//				ID:          "1",
+	//				ShortCode:   "short_code1",
+	//				OriginalURL: "original_url1",
+	//			},
+	//			{
+	//				ID:          "2",
+	//				ShortCode:   "short_code2",
+	//				OriginalURL: "original_url2",
+	//			},
+	//		},
+	//		wantErr: true,
+	//	},
+	//}
+	//for _, tt := range tests {
+	//	t.Run(tt.name, func(t *testing.T) {
+	//
+	//
+	//		err := f.BatchSave(t.Context(), tt.links)
+	//		if tt.wantErr {
+	//			assert.Error(t, err)
+	//		} else {
+	//			assert.NoError(t, err)
+	//		}
+	//	})
+	//}
+	//
+	//t.Cleanup(func() {
+	//
+	//})
 }
 
 func TestPostgresStorage_Get(t *testing.T) {
@@ -103,27 +124,6 @@ func TestPostgresStorage_GetByOriginalURL(t *testing.T) {
 				db: tt.fields.db,
 			}
 			assert.Equalf(t, tt.want, p.GetByOriginalURL(context.Background(), tt.args.originalURL), "GetByOriginalURL(%v)", tt.args.originalURL)
-		})
-	}
-}
-
-func TestPostgresStorage_Init(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &PostgresStorage{
-				db: tt.fields.db,
-			}
-			tt.wantErr(t, p.Init(), "Init()")
 		})
 	}
 }

@@ -25,7 +25,7 @@ func main() {
 		log.Info("Failed to connect to database")
 	}
 
-	storage := getStorage(connection, &conf)
+	storage := getStorage(context.Background(), connection, &conf)
 	shorter := getShortener(conf.ShortURLHost, storage)
 
 	r := chi.NewRouter()
@@ -53,10 +53,10 @@ func getShortener(baseURL string, storage storages.URLStorage) *shortener.Shorte
 	)
 }
 
-func getStorage(db *sql.DB, config *config.Config) storages.URLStorage {
+func getStorage(ctx context.Context, db *sql.DB, config *config.Config) storages.URLStorage {
 	if db != nil {
-		storage := storages.NewPostgresStorageStorage(db)
-		err := storage.Init()
+		storage := storages.NewPostgresStorageStorage(db, "links")
+		err := storage.Init(ctx)
 		if err != nil {
 			return nil
 		}
