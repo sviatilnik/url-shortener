@@ -166,9 +166,12 @@ func (p *PostgresStorage) GetUserLinks(ctx context.Context, userID string) ([]*m
 		`SELECT "uuid", "originalURL",  "shortCode", "userID"
 				FROM `+p.tableName+` 
 				WHERE "userID"=$1`, userID)
-
 	if err != nil {
 		return links, err
+	}
+
+	if rows.Err() != nil {
+		return links, rows.Err()
 	}
 
 	for rows.Next() {

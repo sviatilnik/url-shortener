@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/sviatilnik/url-shortener/internal/app/config"
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"net/http"
 	"strings"
 )
@@ -27,7 +28,7 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 
 		userID := ""
 		authCookie, err := r.Cookie("USER_ID")
-		authSignCookie, err := r.Cookie("USER_SIGN")
+		authSignCookie, _ := r.Cookie("USER_SIGN")
 		if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
 			!verifySignUserID(key, strings.Replace(authCookie.Value, "USER_ID", "", 1), strings.Replace(authSignCookie.Value, "USER_SIGN", "", 1)) {
 			userID = generateUserID()
@@ -39,14 +40,11 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 		} else {
 			userID = strings.Replace(authCookie.Value, "USER_ID", "", 1)
 			r.Header.Set("USER_ID", userID)
-
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), "userID", userID))
+		r = r.WithContext(context.WithValue(r.Context(), models.ContextUserID, userID))
 
 		nextHandler.ServeHTTP(w, r)
-
-		return
 	})
 }
 
