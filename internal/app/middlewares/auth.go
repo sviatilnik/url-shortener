@@ -39,8 +39,11 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 			!verifySignUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1)) {
 			userID = generateUserID()
 			userIDSign := signUserID(key, userID)
+			w.Header().Set("Authorization", userIDSign)
 
 			http.SetCookie(w, &http.Cookie{Name: "Authorization", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/", Expires: time.Now().Add(TokenExp)})
+		} else if strings.TrimSpace(r.Header.Get("Authorization")) != "" {
+			userID = getUserID(key, r.Header.Get("Authorization"))
 		} else {
 			userID = getUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1))
 		}
