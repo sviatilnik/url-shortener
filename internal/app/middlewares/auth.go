@@ -2,19 +2,26 @@ package middlewares
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"net/http"
 	"strings"
+	"time"
 )
+
+const TOKEN_EXP = time.Hour * 3
 
 type AuthMiddleware struct {
 	config *config.Config
+}
+
+type Claims struct {
+	jwt.RegisteredClaims
+	UserID string
 }
 
 func NewAuthMiddleware(config *config.Config) *AuthMiddleware {
@@ -27,17 +34,15 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 		key := m.config.AuthSecret
 
 		userID := ""
-		authCookie, err := r.Cookie("USER_ID")
-		authSignCookie, _ := r.Cookie("USER_SIGN")
+		authCookie, err := r.Cookie("Authorization")
 		if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
-			!verifySignUserID(key, strings.Replace(authCookie.Value, "USER_ID", "", 1), strings.Replace(authSignCookie.Value, "USER_SIGN", "", 1)) {
+			!verifySignUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1)) {
 			userID = generateUserID()
-			userIDSign := signUserID(key, []byte(userID))
+			userIDSign := signUserID(key, userID)
 
-			http.SetCookie(w, &http.Cookie{Name: "USER_ID", Value: userID, HttpOnly: true, Secure: true, Path: "/"})
-			http.SetCookie(w, &http.Cookie{Name: "USER_SIGN", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/"})
+			http.SetCookie(w, &http.Cookie{Name: "Authorization", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/"})
 		} else {
-			userID = strings.Replace(authCookie.Value, "USER_ID", "", 1)
+			userID = getUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1))
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), models.ContextUserID, userID))
@@ -55,16 +60,39 @@ func generateUserID() string {
 	return hex.EncodeToString(userID)
 }
 
-func signUserID(key string, userID []byte) string {
-	h := hmac.New(sha256.New, []byte(key))
-	h.Write(userID)
+func signUserID(key, userID string) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
+		},
+		UserID: userID,
+	})
 
-	return hex.EncodeToString(h.Sum(nil))
+	tokenString, err := token.SignedString([]byte(key))
+	if err != nil {
+		return ""
+	}
+
+	return tokenString
 }
 
-func verifySignUserID(key, userID, sign string) bool {
-	h := hmac.New(sha256.New, []byte(key))
-	h.Write([]byte(userID))
+func verifySignUserID(key, token string) bool {
+	return strings.TrimSpace(getUserID(key, token)) != ""
+}
 
-	return hmac.Equal([]byte(hex.EncodeToString(h.Sum(nil))), []byte(sign))
+func getUserID(key, tokenString string) string {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims,
+		func(t *jwt.Token) (interface{}, error) {
+			return []byte(key), nil
+		})
+	if err != nil {
+		return ""
+	}
+
+	if !token.Valid {
+		return ""
+	}
+
+	return claims.UserID
 }

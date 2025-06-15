@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
@@ -53,7 +52,6 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println(err)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
