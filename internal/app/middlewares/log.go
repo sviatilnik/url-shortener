@@ -28,11 +28,11 @@ func Log(next http.Handler) http.Handler {
 			"request",
 			"uri", r.RequestURI,
 			"method", r.Method,
-			"request_cookies", r.Header.Get("Cookie"),
+			"request_Authorization", r.Header.Get("Authorization"),
 			"status", lw.data.status,
 			"duration", duration,
 			"size", lw.data.size,
-			"response_cookies", lw.Header().Get("Set-Cookie"),
+			"response_Authorization", lw.Header().Get("Authorization"),
 		)
 	})
 }

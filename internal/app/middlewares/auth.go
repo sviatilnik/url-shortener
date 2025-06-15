@@ -30,22 +30,32 @@ func NewAuthMiddleware(config *config.Config) *AuthMiddleware {
 
 func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		key := m.config.AuthSecret
 
 		userID := ""
-		authCookie, err := r.Cookie("Authorization")
-		if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
-			!verifySignUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1)) {
-			userID = generateUserID()
-			userIDSign := signUserID(key, userID)
-			w.Header().Set("Authorization", userIDSign)
-
-			http.SetCookie(w, &http.Cookie{Name: "Authorization", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/", Expires: time.Now().Add(TokenExp)})
-		} else if strings.TrimSpace(r.Header.Get("Authorization")) != "" {
+		if strings.TrimSpace(r.Header.Get("Authorization")) != "" {
 			userID = getUserID(key, r.Header.Get("Authorization"))
 		} else {
-			userID = getUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1))
+			authCookie, err := r.Cookie("Authorization")
+			if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
+				!verifySignUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1)) {
+				userID = generateUserID()
+				userIDSign := signUserID(key, userID)
+				w.Header().Set("Authorization", userIDSign)
+
+				http.SetCookie(w,
+					&http.Cookie{
+						Name:     "Authorization",
+						Value:    userIDSign,
+						HttpOnly: true,
+						Secure:   true,
+						Path:     "/",
+						Expires:  time.Now().Add(TokenExp),
+					},
+				)
+			} else {
+				userID = getUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1))
+			}
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), models.ContextUserID, userID))
