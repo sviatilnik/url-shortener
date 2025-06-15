@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const TOKEN_EXP = time.Hour * 3
+const TokenExp = time.Hour * 3
 
 type AuthMiddleware struct {
 	config *config.Config
@@ -40,7 +40,7 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 			userID = generateUserID()
 			userIDSign := signUserID(key, userID)
 
-			http.SetCookie(w, &http.Cookie{Name: "Authorization", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/"})
+			http.SetCookie(w, &http.Cookie{Name: "Authorization", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/", Expires: time.Now().Add(TokenExp)})
 		} else {
 			userID = getUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1))
 		}
@@ -63,7 +63,7 @@ func generateUserID() string {
 func signUserID(key, userID string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExp)),
 		},
 		UserID: userID,
 	})
