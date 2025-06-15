@@ -41,6 +41,11 @@ func (s *Shortener) GenerateShortLink(ctx context.Context, url string) (string, 
 	if !util.IsURL(url) {
 		return "", ErrInvalidURL
 	}
+	userID := ""
+	tmpUserID := ctx.Value("userID")
+	if tmpUserID != nil {
+		userID = tmpUserID.(string)
+	}
 
 	link := &models.Link{}
 	var saveErr error
@@ -53,6 +58,7 @@ func (s *Shortener) GenerateShortLink(ctx context.Context, url string) (string, 
 	link.ID = short
 	link.ShortCode = short
 	link.OriginalURL = url
+	link.UserID = userID
 
 	savedLink, err = s.storage.Save(ctx, link)
 
@@ -110,4 +116,18 @@ func (s *Shortener) GenerateBatchShortLink(ctx context.Context, links []models.L
 func (s *Shortener) getShortBase() string {
 	urlBase := s.conf.BaseURL
 	return strings.TrimRight(urlBase, "/")
+}
+
+func (s *Shortener) GetUserLinks(ctx context.Context, userID string) ([]*models.Link, error) {
+
+	links, err := s.storage.GetUserLinks(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, link := range links {
+		link.ShortURL = s.getShortBase() + "/" + link.ShortCode
+	}
+
+	return links, nil
 }

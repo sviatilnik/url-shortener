@@ -65,3 +65,7 @@ func (i InMemoryStorage) Get(ctx context.Context, shortCode string) (*models.Lin
 		}, nil
 	}
 }
+
+func (i InMemoryStorage) GetUserLinks(ctx context.Context, userID string) ([]*models.Link, error) {
+	panic("implement me")
+}

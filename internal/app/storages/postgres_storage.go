@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"strings"
 )
@@ -34,10 +35,10 @@ func (p *PostgresStorage) Save(ctx context.Context, link *models.Link) (*models.
 
 	res, err := p.db.ExecContext(
 		ctx,
-		`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode") 
-				VALUES ($1, $2, $3) 
+		`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode", "userID") 
+				VALUES ($1, $2, $3, $4) 
 				ON CONFLICT("originalURL") DO NOTHING`,
-		link.ID, link.OriginalURL, link.ShortCode)
+		link.ID, link.OriginalURL, link.ShortCode, link.UserID)
 
 	if err != nil {
 		return nil, err
@@ -63,10 +64,10 @@ func (p *PostgresStorage) BatchSave(ctx context.Context, links []*models.Link) e
 	for _, link := range links {
 		_, err = tx.ExecContext(
 			ctx,
-			`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode") 
+			`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode", "userID") 
 				    VALUES ($1, $2, $3) 
-                    ON CONFLICT("uuid") DO UPDATE SET "originalURL" = $2, "shortCode" = $3`,
-			link.ID, link.OriginalURL, link.ShortCode)
+                    ON CONFLICT("uuid") DO UPDATE SET "originalURL" = $2, "shortCode" = $3, "userID" = $4`,
+			link.ID, link.OriginalURL, link.ShortCode, link.UserID)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -86,14 +87,14 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 		uuid        string
 		originalURL string
 		shortCode   string
+		userID      string
 	}
 
 	err := p.db.QueryRowContext(
 		ctx,
-		`SELECT "uuid", "originalURL",  "shortCode" 
+		`SELECT "uuid", "originalURL",  "shortCode", "userID"
 				FROM `+p.tableName+` 
-				WHERE "shortCode"=$2`,
-		p.tableName, shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode)
+				WHERE "shortCode"=$1`, shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode, &row.userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrKeyNotFound
 	}
@@ -106,6 +107,7 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 		ID:          row.uuid,
 		OriginalURL: row.originalURL,
 		ShortCode:   row.shortCode,
+		UserID:      row.userID,
 	}, nil
 }
 
@@ -116,8 +118,10 @@ func (p *PostgresStorage) Init(ctx context.Context) error {
     "originalURL" character varying(512) NOT NULL,
     "shortCode" character varying(255) NOT NULL,
     "createdAt" timestamp with time zone NOT NULL DEFAULT NOW(),
+	"userID" character varying(255) NOT NULL,
     PRIMARY KEY ("uuid"));
     CREATE INDEX IF NOT EXISTS "idx_link_shortCode" ON `+p.tableName+` ("shortCode");
+    CREATE INDEX IF NOT EXISTS "idx_link_userID" ON `+p.tableName+` ("userID");
 	CREATE UNIQUE INDEX IF NOT EXISTS  "idx_link_originalUrl" ON `+p.tableName+` ("originalURL");`)
 	return err
 }
@@ -132,15 +136,16 @@ func (p *PostgresStorage) GetByOriginalURL(ctx context.Context, originalURL stri
 		uuid        string
 		originalURL string
 		shortCode   string
+		userID      string
 	}
 
 	err := p.db.QueryRowContext(
 		ctx,
-		`SELECT "uuid", "originalURL",  "shortCode" 
+		`SELECT "uuid", "originalURL",  "shortCode", "userID"
 				FROM `+p.tableName+` 
 				WHERE "originalURL"=$1 
 				ORDER BY "createdAt" DESC LIMIT 1`,
-		originalURL).Scan(&row.uuid, &row.originalURL, &row.shortCode)
+		originalURL).Scan(&row.uuid, &row.originalURL, &row.shortCode, &row.userID)
 
 	if err != nil {
 		return nil
@@ -150,5 +155,32 @@ func (p *PostgresStorage) GetByOriginalURL(ctx context.Context, originalURL stri
 		ID:          row.uuid,
 		OriginalURL: row.originalURL,
 		ShortCode:   row.shortCode,
+		UserID:      row.userID,
 	}
+}
+
+func (p *PostgresStorage) GetUserLinks(ctx context.Context, userID string) ([]*models.Link, error) {
+	links := make([]*models.Link, 0)
+
+	fmt.Println(userID)
+	rows, err := p.db.QueryContext(
+		ctx,
+		`SELECT "uuid", "originalURL",  "shortCode", "userID"
+				FROM `+p.tableName+` 
+				WHERE "userID"=$1`, userID)
+
+	if err != nil {
+		return links, err
+	}
+
+	for rows.Next() {
+		link := &models.Link{}
+		if err := rows.Scan(&link.ID, &link.OriginalURL, &link.ShortCode, &link.UserID); err != nil {
+			return nil, err
+		}
+
+		links = append(links, link)
+	}
+
+	return links, nil
 }

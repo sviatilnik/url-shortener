@@ -35,11 +35,14 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 			return
 		}
 
+		userID := r.Context().Value("userID").(string)
+
 		links := make([]models.Link, len(req))
 		for _, item := range req {
 			links = append(links, models.Link{
 				ID:          item.CorrelationID,
 				OriginalURL: item.OriginalURL,
+				UserID:      userID,
 			})
 		}
 

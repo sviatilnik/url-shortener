@@ -5,4 +5,5 @@ type Link struct {
 	ShortCode   string
 	ShortURL    string
 	OriginalURL string
+	UserID      string
 }
