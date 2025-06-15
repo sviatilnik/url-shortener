@@ -64,7 +64,7 @@ func (p *PostgresStorage) BatchSave(ctx context.Context, links []*models.Link) e
 		_, err = tx.ExecContext(
 			ctx,
 			`INSERT INTO `+p.tableName+` ("uuid", "originalURL", "shortCode", "userID") 
-				    VALUES ($1, $2, $3) 
+				    VALUES ($1, $2, $3, $4) 
                     ON CONFLICT("uuid") DO UPDATE SET "originalURL" = $2, "shortCode" = $3, "userID" = $4`,
 			link.ID, link.OriginalURL, link.ShortCode, link.UserID)
 		if err != nil {
