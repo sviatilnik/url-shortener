@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"net/http"
 	"strings"
@@ -14,7 +15,7 @@ type userURLsResponseItem struct {
 
 func UserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tmpUserID := r.Context().Value("userID")
+		tmpUserID := r.Context().Value(models.ContextUserID)
 		if tmpUserID == nil {
 			w.WriteHeader(http.StatusUnauthorized)
 		}

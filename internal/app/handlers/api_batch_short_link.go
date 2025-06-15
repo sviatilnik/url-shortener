@@ -35,7 +35,7 @@ func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 			return
 		}
 
-		userID := r.Context().Value("userID").(string)
+		userID := r.Context().Value(models.ContextUserID).(string)
 
 		links := make([]models.Link, len(req))
 		for _, item := range req {

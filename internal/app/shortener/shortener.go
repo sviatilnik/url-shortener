@@ -42,7 +42,7 @@ func (s *Shortener) GenerateShortLink(ctx context.Context, url string) (string, 
 		return "", ErrInvalidURL
 	}
 	userID := ""
-	tmpUserID := ctx.Value("userID")
+	tmpUserID := ctx.Value(models.ContextUserID)
 	if tmpUserID != nil {
 		userID = tmpUserID.(string)
 	}

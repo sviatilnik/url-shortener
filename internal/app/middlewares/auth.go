@@ -33,13 +33,11 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 			!verifySignUserID(key, strings.Replace(authCookie.Value, "USER_ID", "", 1), strings.Replace(authSignCookie.Value, "USER_SIGN", "", 1)) {
 			userID = generateUserID()
 			userIDSign := signUserID(key, []byte(userID))
-			r.Header.Set("USER_ID", userID)
 
 			http.SetCookie(w, &http.Cookie{Name: "USER_ID", Value: userID, HttpOnly: true, Secure: true, Path: "/"})
 			http.SetCookie(w, &http.Cookie{Name: "USER_SIGN", Value: userIDSign, HttpOnly: true, Secure: true, Path: "/"})
 		} else {
 			userID = strings.Replace(authCookie.Value, "USER_ID", "", 1)
-			r.Header.Set("USER_ID", userID)
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), models.ContextUserID, userID))
