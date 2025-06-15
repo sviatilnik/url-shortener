@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"strings"
 )
@@ -118,7 +117,7 @@ func (p *PostgresStorage) Init(ctx context.Context) error {
     "originalURL" character varying(512) NOT NULL,
     "shortCode" character varying(255) NOT NULL,
     "createdAt" timestamp with time zone NOT NULL DEFAULT NOW(),
-	"userID" character varying(255) NOT NULL,
+	"userID" character varying(255),
     PRIMARY KEY ("uuid"));
     CREATE INDEX IF NOT EXISTS "idx_link_shortCode" ON `+p.tableName+` ("shortCode");
     CREATE INDEX IF NOT EXISTS "idx_link_userID" ON `+p.tableName+` ("userID");
@@ -162,7 +161,6 @@ func (p *PostgresStorage) GetByOriginalURL(ctx context.Context, originalURL stri
 func (p *PostgresStorage) GetUserLinks(ctx context.Context, userID string) ([]*models.Link, error) {
 	links := make([]*models.Link, 0)
 
-	fmt.Println(userID)
 	rows, err := p.db.QueryContext(
 		ctx,
 		`SELECT "uuid", "originalURL",  "shortCode", "userID"
