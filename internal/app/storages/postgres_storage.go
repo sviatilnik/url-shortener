@@ -203,7 +203,5 @@ func (p *PostgresStorage) Delete(ctx context.Context, IDs []string, userID strin
 		return err
 	}
 
-	err = tx.Commit()
-
-	return nil
+	return tx.Commit()
 }
