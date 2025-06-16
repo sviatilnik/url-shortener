@@ -58,7 +58,6 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 			}
 		}
 
-		userID = "5389cff347bdce85a0734b766614b522"
 		r = r.WithContext(context.WithValue(r.Context(), models.ContextUserID, userID))
 
 		nextHandler.ServeHTTP(w, r)
