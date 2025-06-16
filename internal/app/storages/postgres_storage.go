@@ -87,13 +87,14 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 		originalURL string
 		shortCode   string
 		userID      string
+		isDeleted   bool
 	}
 
 	err := p.db.QueryRowContext(
 		ctx,
-		`SELECT "uuid", "originalURL",  "shortCode", "userID"
+		`SELECT "uuid", "originalURL",  "shortCode", "userID", "isDeleted"
 				FROM `+p.tableName+` 
-				WHERE "shortCode"=$1`, shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode, &row.userID)
+				WHERE "shortCode"=$1`, shortCode).Scan(&row.uuid, &row.originalURL, &row.shortCode, &row.userID, &row.isDeleted)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrKeyNotFound
 	}
@@ -107,6 +108,7 @@ func (p *PostgresStorage) Get(ctx context.Context, shortCode string) (*models.Li
 		OriginalURL: row.originalURL,
 		ShortCode:   row.shortCode,
 		UserID:      row.userID,
+		IsDeleted:   row.isDeleted,
 	}, nil
 }
 
