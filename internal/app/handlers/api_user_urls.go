@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -52,5 +54,43 @@ func UserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(encodedResp)
+	}
+}
+
+func DeleteUserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpUserID := r.Context().Value(models.ContextUserID)
+		if tmpUserID == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+
+		userID := tmpUserID.(string)
+		if userID == "" || strings.TrimSpace(userID) == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		rawBody, err := io.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		IDs := make([]string, 0)
+		err = json.Unmarshal(rawBody, &IDs)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = shorter.DeleteUserLinks(r.Context(), IDs, userID)
+
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
 	}
 }

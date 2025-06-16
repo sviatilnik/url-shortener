@@ -24,17 +24,17 @@ func NewShortener(store storages.URLStorage, generator generators.Generator, con
 	}
 }
 
-func (s *Shortener) GetFullLinkByShortCode(ctx context.Context, shortCode string) (string, error) {
+func (s *Shortener) GetFullLinkByShortCode(ctx context.Context, shortCode string) (*models.Link, error) {
 	if strings.TrimSpace(shortCode) == "" {
-		return "", ErrIDIsRequired
+		return nil, ErrIDIsRequired
 	}
 
 	link, err := s.storage.Get(ctx, shortCode)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return link.OriginalURL, nil
+	return link, nil
 }
 
 func (s *Shortener) GenerateShortLink(ctx context.Context, url string) (string, error) {
@@ -130,4 +130,8 @@ func (s *Shortener) GetUserLinks(ctx context.Context, userID string) ([]*models.
 	}
 
 	return links, nil
+}
+
+func (s *Shortener) DeleteUserLinks(ctx context.Context, linksIDs []string, userID string) error {
+	return s.storage.Delete(ctx, linksIDs, userID)
 }

@@ -118,6 +118,7 @@ func (p *PostgresStorage) Init(ctx context.Context) error {
     "shortCode" character varying(255) NOT NULL,
     "createdAt" timestamp with time zone NOT NULL DEFAULT NOW(),
 	"userID" character varying(255),
+	"isDeleted" boolean NOT NULL DEFAULT FALSE,
     PRIMARY KEY ("uuid"));
     CREATE INDEX IF NOT EXISTS "idx_link_shortCode" ON `+p.tableName+` ("shortCode");
     CREATE INDEX IF NOT EXISTS "idx_link_userID" ON `+p.tableName+` ("userID");
@@ -184,4 +185,25 @@ func (p *PostgresStorage) GetUserLinks(ctx context.Context, userID string) ([]*m
 	}
 
 	return links, nil
+}
+
+func (p *PostgresStorage) Delete(ctx context.Context, IDs []string, userID string) error {
+	tx, err := p.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		`UPDATE `+p.tableName+` SET "isDeleted"=true WHERE "uuid" = any('{"`+strings.Join(IDs, "\", \"")+`"}'::text[]) and "userID"='`+userID+`'`,
+	)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+
+	return nil
 }

@@ -128,3 +128,7 @@ func (f *FileStorage) Get(ctx context.Context, shortCode string) (*models.Link, 
 func (f *FileStorage) GetUserLinks(ctx context.Context, userID string) ([]*models.Link, error) {
 	panic("implement me")
 }
+
+func (f *FileStorage) Delete(ctx context.Context, IDs []string, userID string) error {
+	panic("implement me")
+}

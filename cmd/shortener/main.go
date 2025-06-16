@@ -41,6 +41,7 @@ func main() {
 	r.Post("/api/shorten", handlers.APIShortLinkHandler(shorter))
 	r.Post("/api/shorten/batch", handlers.BatchShortLinkHandler(shorter))
 	r.Get("/api/user/urls", handlers.UserURLsHandler(shorter))
+	r.Delete("/api/user/urls", handlers.DeleteUserURLsHandler(shorter))
 
 	err := http.ListenAndServe(conf.Host, r)
 	if err != nil {

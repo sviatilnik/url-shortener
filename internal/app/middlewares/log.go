@@ -28,11 +28,9 @@ func Log(next http.Handler) http.Handler {
 			"request",
 			"uri", r.RequestURI,
 			"method", r.Method,
-			"request_Authorization", r.Header.Get("Authorization"),
 			"status", lw.data.status,
 			"duration", duration,
 			"size", lw.data.size,
-			"response_Authorization", lw.Header().Get("Authorization"),
 		)
 	})
 }
