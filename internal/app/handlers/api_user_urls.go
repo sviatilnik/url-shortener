@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
@@ -86,7 +85,6 @@ func DeleteUserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		err = shorter.DeleteUserLinks(r.Context(), IDs, userID)
 
 		if err != nil {
-			fmt.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

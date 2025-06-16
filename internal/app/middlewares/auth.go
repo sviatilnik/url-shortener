@@ -38,7 +38,7 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 		} else {
 			authCookie, err := r.Cookie("Authorization")
 			if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
-				!verifySignUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1)) {
+				!verifySignUserID(key, authCookie.Value) {
 				userID = generateUserID()
 				userIDSign := signUserID(key, userID)
 				w.Header().Set("Authorization", userIDSign)
@@ -54,7 +54,7 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 					},
 				)
 			} else {
-				userID = getUserID(key, strings.Replace(authCookie.Value, "Authorization", "", 1))
+				userID = getUserID(key, authCookie.Value)
 			}
 		}
 
