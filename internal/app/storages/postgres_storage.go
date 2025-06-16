@@ -197,7 +197,7 @@ func (p *PostgresStorage) Delete(ctx context.Context, IDs []string, userID strin
 
 	_, err = tx.ExecContext(
 		ctx,
-		`UPDATE `+p.tableName+` SET "isDeleted"=true WHERE "uuid" = any('{"`+strings.Join(IDs, "\", \"")+`"}'::text[]) and "userID"='`+userID+`'`,
+		`UPDATE `+p.tableName+` SET "isDeleted"=true WHERE "uuid" = any('{"`+strings.Join(IDs, "\", \"")+`"}'::text[])`, // and "userID"='`+userID+`'`,
 	)
 
 	if err != nil {
