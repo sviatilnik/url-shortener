@@ -1,10 +1,11 @@
 package config
 
 import (
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/sviatilnik/url-shortener/internal/app/config/mock_config"
-	"testing"
 )
 
 func TestEnvProvider(t *testing.T) {
@@ -17,6 +18,8 @@ func TestEnvProvider(t *testing.T) {
 	m.EXPECT().LookupEnv("BASE_URL").Return("https://short.google.com", true).AnyTimes()
 	m.EXPECT().LookupEnv("DATABASE_DSN").Return("database_dsn", true).AnyTimes()
 	m.EXPECT().LookupEnv("FILE_STORAGE_PATH").Return("/tmp/file_storage", true).AnyTimes()
+	m.EXPECT().LookupEnv("AUDIT_FILE").Return("audit-file", true).AnyTimes()
+	m.EXPECT().LookupEnv("AUDIT_URL").Return("audit-url", true).AnyTimes()
 
 	config := NewConfig(NewEnvProvider(m))
 

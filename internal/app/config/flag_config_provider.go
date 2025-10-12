@@ -56,7 +56,7 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 		c.AuditFile = *auditFile
 	}
 
-	if strings.TrimSpace(*auditURL) != "" && util.IsURL(*auditURL) {
+	if strings.TrimSpace(*auditURL) != "" {
 		c.AuditURL = *auditURL
 	}
 
