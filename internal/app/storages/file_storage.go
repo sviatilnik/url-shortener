@@ -4,16 +4,19 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 )
 
 type FileStorage struct {
-	filePath string
-	lastUUID int
-	mut      sync.RWMutex
+	filePath   string
+	lastUUID   int
+	mut        sync.RWMutex
+	cache      map[string]*models.Link
+	cacheMutex sync.RWMutex
 }
 
 type storeItem struct {
@@ -26,6 +29,7 @@ func NewFileStorage(filePath string) *FileStorage {
 	return &FileStorage{
 		filePath: filePath,
 		lastUUID: 0,
+		cache:    make(map[string]*models.Link),
 	}
 }
 
@@ -61,6 +65,11 @@ func (f *FileStorage) Save(ctx context.Context, link *models.Link) (*models.Link
 
 		file.WriteString("\n")
 
+		// Добавляем в кэш
+		f.cacheMutex.Lock()
+		f.cache[link.ShortCode] = link
+		f.cacheMutex.Unlock()
+
 		f.lastUUID++
 		return link, nil
 	}
@@ -90,6 +99,15 @@ func (f *FileStorage) Get(ctx context.Context, shortCode string) (*models.Link, 
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
+		// Сначала проверяем кэш
+		f.cacheMutex.RLock()
+		if link, exists := f.cache[shortCode]; exists {
+			f.cacheMutex.RUnlock()
+			return link, nil
+		}
+		f.cacheMutex.RUnlock()
+
+		// Если не в кэше, ищем в файле
 		file, err := os.Open(f.filePath)
 		if err != nil {
 			return nil, err
@@ -108,11 +126,18 @@ func (f *FileStorage) Get(ctx context.Context, shortCode string) (*models.Link, 
 			}
 
 			if item.Short == shortCode {
-				return &models.Link{
+				link := &models.Link{
 					ID:          item.UUID,
 					ShortCode:   item.Short,
 					OriginalURL: item.OriginalURL,
-				}, nil
+				}
+
+				// Добавляем в кэш
+				f.cacheMutex.Lock()
+				f.cache[shortCode] = link
+				f.cacheMutex.Unlock()
+
+				return link, nil
 			}
 		}
 

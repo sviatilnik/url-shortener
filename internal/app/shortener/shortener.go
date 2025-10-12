@@ -3,11 +3,12 @@ package shortener
 import (
 	"context"
 	"errors"
+	"strings"
+
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"github.com/sviatilnik/url-shortener/internal/app/util"
-	"strings"
 )
 
 type Shortener struct {
@@ -91,6 +92,7 @@ func (s *Shortener) GenerateBatchShortLink(ctx context.Context, links []models.L
 			continue
 		}
 
+		link.ID = short
 		link.ShortCode = short
 
 		validLinks = append(validLinks, &link)
