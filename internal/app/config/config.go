@@ -6,6 +6,8 @@ type Config struct {
 	FileStoragePath string
 	DatabaseDSN     string
 	AuthSecret      string
+	AuditFile       string
+	AuditURL        string
 }
 
 func NewConfig(providers ...Provider) Config {

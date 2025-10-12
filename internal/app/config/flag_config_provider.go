@@ -2,8 +2,9 @@ package config
 
 import (
 	"flag"
-	"github.com/sviatilnik/url-shortener/internal/app/util"
 	"strings"
+
+	"github.com/sviatilnik/url-shortener/internal/app/util"
 )
 
 type FlagProvider struct {
@@ -11,6 +12,8 @@ type FlagProvider struct {
 	ShortURLFlagName        string
 	FileStoragePathFlagName string
 	DatabaseDSNFlagName     string
+	AuditFileFlagName       string
+	AuditURLFlagName        string
 }
 
 func NewFlagProvider() *FlagProvider {
@@ -19,6 +22,8 @@ func NewFlagProvider() *FlagProvider {
 		ShortURLFlagName:        "b",
 		FileStoragePathFlagName: "f",
 		DatabaseDSNFlagName:     "d",
+		AuditFileFlagName:       "audit-file",
+		AuditURLFlagName:        "audit-url",
 	}
 }
 
@@ -27,6 +32,8 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 	shortURLHost := flag.String(flagConf.ShortURLFlagName, "", "Базовый адрес результирующего сокращённого URL")
 	fileStoragePath := flag.String(flagConf.FileStoragePathFlagName, "", "Путь к файлу для хранения")
 	databaseDSN := flag.String(flagConf.DatabaseDSNFlagName, "", "Строка подлючения к БД")
+	auditFile := flag.String(flagConf.AuditFileFlagName, "", "Путь к файлу для аудита")
+	auditURL := flag.String(flagConf.AuditURLFlagName, "", "URL удаленного сервера для аудита")
 	flag.Parse()
 
 	if strings.TrimSpace(*host) != "" {
@@ -43,6 +50,14 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 
 	if strings.TrimSpace(*databaseDSN) != "" {
 		c.DatabaseDSN = *databaseDSN
+	}
+
+	if strings.TrimSpace(*auditFile) != "" {
+		c.AuditFile = *auditFile
+	}
+
+	if strings.TrimSpace(*auditURL) != "" && util.IsURL(*auditURL) {
+		c.AuditURL = *auditURL
 	}
 
 	return nil

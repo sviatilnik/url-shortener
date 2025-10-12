@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/sviatilnik/url-shortener/internal/app/audit"
 	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
 	"github.com/sviatilnik/url-shortener/internal/app/handlers"
@@ -12,8 +16,6 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/middlewares"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
-	"net/http"
-	"time"
 )
 
 func main() {
@@ -27,11 +29,13 @@ func main() {
 
 	storage := getStorage(context.Background(), connection, &conf)
 	shorter := getShortener(conf.ShortURLHost, storage)
+	auditService := getAuditService(&conf)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
 	r.Use(middlewares.NewAuthMiddleware(&conf).Auth)
+	r.Use(middlewares.NewAuditMiddleware(auditService).Audit)
 
 	if connection != nil {
 		r.Get("/ping", handlers.PingDBHandler(connection))
@@ -97,4 +101,14 @@ func getDBConnection(config *config.Config) (*sql.DB, error) {
 	}
 
 	return conn, nil
+}
+
+func getAuditService(config *config.Config) *audit.AuditService {
+	auditService := audit.NewAuditService()
+
+	auditService.AddFileObserver(config.AuditFile)
+
+	auditService.AddHTTPObserver(config.AuditURL)
+
+	return auditService
 }

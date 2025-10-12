@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
 	"net/http"
+
+	"github.com/sviatilnik/url-shortener/internal/app/middlewares"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 )
 
 type request struct {
@@ -29,6 +32,10 @@ func APIShortLinkHandler(short *shortener.Shortener) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
+		// Устанавливаем URL в контекст для аудита
+		ctx := context.WithValue(r.Context(), middlewares.AuditURLKey, req.URL)
+		*r = *r.WithContext(ctx)
 
 		status := http.StatusCreated
 		shortLink, err := short.GenerateShortLink(r.Context(), req.URL)
