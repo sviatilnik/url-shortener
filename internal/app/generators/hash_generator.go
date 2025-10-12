@@ -29,11 +29,7 @@ func (g *HashGenerator) Get(str string) (string, error) {
 	}
 
 	hash := md5.Sum([]byte(str))
-	buf := g.pool.Get().([]byte)
-	buf = buf[:0]
-	buf = append(buf, hash[:]...)
-	short := hex.EncodeToString(buf)
-	g.pool.Put(buf)
+	short := hex.EncodeToString(hash[:])
 
 	return short[:g.len], nil
 }

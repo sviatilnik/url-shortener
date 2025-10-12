@@ -92,7 +92,6 @@ func (s *Shortener) GenerateBatchShortLink(ctx context.Context, links []models.L
 			continue
 		}
 
-		link.ID = short
 		link.ShortCode = short
 
 		validLinks = append(validLinks, &link)
