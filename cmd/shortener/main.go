@@ -31,6 +31,8 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
+	r.Use(middlewares.NewAuthMiddleware(&conf).Auth)
+
 	if connection != nil {
 		r.Get("/ping", handlers.PingDBHandler(connection))
 	}
@@ -38,6 +40,8 @@ func main() {
 	r.Get("/{short_code}", handlers.RedirectToFullLinkHandler(shorter))
 	r.Post("/api/shorten", handlers.APIShortLinkHandler(shorter))
 	r.Post("/api/shorten/batch", handlers.BatchShortLinkHandler(shorter))
+	r.Get("/api/user/urls", handlers.UserURLsHandler(shorter))
+	r.Delete("/api/user/urls", handlers.DeleteUserURLsHandler(shorter))
 
 	err := http.ListenAndServe(conf.Host, r)
 	if err != nil {

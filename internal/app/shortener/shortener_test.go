@@ -75,7 +75,7 @@ func TestShortener_GetFullLinkByID(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				assert.Equal(t, tt.want, got.OriginalURL)
 			}
 		})
 	}
