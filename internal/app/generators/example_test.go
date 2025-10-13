@@ -115,7 +115,7 @@ func ExampleHashGenerator_Get() {
 	}
 
 	// Output:
-	// URL 1: code length 6, hex: true
-	// URL 2: code length 6, hex: true
-	// URL 3: code length 6, hex: true
+	//URL 1: code f33e4b length 6, hex: true
+	//URL 2: code f2ec0b length 6, hex: true
+	//URL 3: code c0da95 length 6, hex: true
 }
