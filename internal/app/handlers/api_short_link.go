@@ -11,14 +11,23 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 )
 
+// request представляет структуру запроса для создания короткой ссылки.
 type request struct {
-	URL string `json:"url"`
+	URL string `json:"url"` // Оригинальный URL для сокращения
 }
 
+// response представляет структуру ответа с созданной короткой ссылкой.
 type response struct {
-	Result string `json:"result"`
+	Result string `json:"result"` // Сокращенная ссылка
 }
 
+// APIShortLinkHandler создает HTTP-обработчик для API создания коротких ссылок.
+// Обработчик принимает JSON-запрос с полем "url" и возвращает JSON-ответ с полем "result".
+// Возможные коды ответа:
+//   - 201 Created - ссылка успешно создана
+//   - 409 Conflict - ссылка уже существует
+//   - 400 Bad Request - неверный формат запроса или URL
+//   - 500 Internal Server Error - внутренняя ошибка сервера
 func APIShortLinkHandler(short *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawBody, err := io.ReadAll(r.Body)

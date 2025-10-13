@@ -10,11 +10,19 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 )
 
+// userURLsResponseItem представляет элемент ответа со списком URL пользователя.
 type userURLsResponseItem struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+	ShortURL    string `json:"short_url"`    // Сокращенная ссылка
+	OriginalURL string `json:"original_url"` // Оригинальный URL
 }
 
+// UserURLsHandler создает HTTP-обработчик для получения списка URL пользователя.
+// Обработчик возвращает массив JSON-объектов с полями "short_url" и "original_url".
+// Возможные коды ответа:
+//   - 200 OK - список URL успешно получен
+//   - 204 No Content - у пользователя нет сохраненных URL
+//   - 401 Unauthorized - пользователь не авторизован
+//   - 500 Internal Server Error - внутренняя ошибка сервера
 func UserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpUserID := r.Context().Value(models.ContextUserID)
@@ -57,6 +65,13 @@ func UserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 	}
 }
 
+// DeleteUserURLsHandler создает HTTP-обработчик для удаления URL пользователя.
+// Обработчик принимает массив строк с идентификаторами URL для удаления.
+// Возможные коды ответа:
+//   - 202 Accepted - запрос на удаление принят
+//   - 400 Bad Request - неверный формат запроса
+//   - 401 Unauthorized - пользователь не авторизован
+//   - 500 Internal Server Error - внутренняя ошибка сервера
 func DeleteUserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpUserID := r.Context().Value(models.ContextUserID)

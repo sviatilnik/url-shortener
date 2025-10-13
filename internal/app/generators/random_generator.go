@@ -6,12 +6,17 @@ import (
 	"sync"
 )
 
+// RandomGenerator генерирует случайные короткие коды заданной длины.
+// Использует алфавит из букв (A-Z, a-z) и цифр (0-9).
+// Генератор является потокобезопасным.
 type RandomGenerator struct {
-	len uint
-	rnd *rand.Rand
-	mu  sync.Mutex
+	len uint       // Длина генерируемого кода
+	rnd *rand.Rand // Генератор случайных чисел
+	mu  sync.Mutex // Мьютекс для обеспечения потокобезопасности
 }
 
+// NewRandomGenerator создает новый генератор случайных кодов.
+// Параметр len определяет длину генерируемого кода.
 func NewRandomGenerator(len uint) *RandomGenerator {
 	return &RandomGenerator{
 		len: len,
@@ -19,6 +24,10 @@ func NewRandomGenerator(len uint) *RandomGenerator {
 	}
 }
 
+// Get генерирует случайный короткий код для переданной строки.
+// Длина кода определяется при создании генератора.
+// Возможные ошибки:
+//   - ErrEmptyString - передана пустая строка
 func (r *RandomGenerator) Get(str string) (string, error) {
 	if strings.TrimSpace(str) == "" {
 		return "", ErrEmptyString

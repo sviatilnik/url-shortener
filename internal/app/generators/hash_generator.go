@@ -7,11 +7,16 @@ import (
 	"sync"
 )
 
+// HashGenerator генерирует короткие коды на основе MD5-хеша входной строки.
+// Использует пул объектов для оптимизации производительности.
+// Генератор является потокобезопасным.
 type HashGenerator struct {
-	len  uint
-	pool sync.Pool
+	len  uint      // Длина генерируемого кода
+	pool sync.Pool // Пул объектов для переиспользования буферов
 }
 
+// NewHashGenerator создает новый генератор на основе хеша.
+// Параметр len определяет длину генерируемого кода.
 func NewHashGenerator(len uint) *HashGenerator {
 	return &HashGenerator{
 		len: len,
@@ -23,6 +28,10 @@ func NewHashGenerator(len uint) *HashGenerator {
 	}
 }
 
+// Get генерирует короткий код на основе MD5-хеша входной строки.
+// Длина кода определяется при создании генератора.
+// Возможные ошибки:
+//   - ErrEmptyString - передана пустая строка
 func (g *HashGenerator) Get(str string) (string, error) {
 	if strings.TrimSpace(str) == "" {
 		return "", ErrEmptyString
