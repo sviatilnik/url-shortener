@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"strings"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 )
 
 type PostgresStorage struct {

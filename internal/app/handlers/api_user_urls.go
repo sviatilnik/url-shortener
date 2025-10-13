@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 )
 
 type userURLsResponseItem struct {

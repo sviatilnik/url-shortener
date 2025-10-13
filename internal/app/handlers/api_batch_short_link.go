@@ -3,10 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
 	"net/http"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 )
 
 type batchRequestItem struct {

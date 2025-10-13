@@ -5,12 +5,14 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/sviatilnik/url-shortener/internal/app/config"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/sviatilnik/url-shortener/internal/app/config"
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 )
 
 const TokenExp = time.Hour * 3

@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/sviatilnik/url-shortener/internal/app/config/mock_config"
 )
 
