@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 type Observer interface {
@@ -23,11 +25,13 @@ type Subject interface {
 type AuditSubject struct {
 	observers []Observer
 	mutex     sync.RWMutex
+	log       *zap.SugaredLogger
 }
 
-func NewAuditSubject() *AuditSubject {
+func NewAuditSubject(log *zap.SugaredLogger) *AuditSubject {
 	return &AuditSubject{
 		observers: make([]Observer, 0),
+		log:       log,
 	}
 }
 
@@ -57,8 +61,7 @@ func (s *AuditSubject) NotifyObservers(ctx context.Context, event *AuditEvent) {
 	for _, observer := range observers {
 		go func(obs Observer) {
 			if err := obs.Notify(ctx, event); err != nil {
-
-				fmt.Printf("Ошибка уведомления наблюдателя: %v\n", err)
+				s.log.Errorw("Ошибка уведомления наблюдателя", "error", err)
 			}
 		}(observer)
 	}
@@ -67,11 +70,13 @@ func (s *AuditSubject) NotifyObservers(ctx context.Context, event *AuditEvent) {
 type FileAuditObserver struct {
 	filePath string
 	mutex    sync.Mutex
+	log      *zap.SugaredLogger
 }
 
-func NewFileAuditObserver(filePath string) *FileAuditObserver {
+func NewFileAuditObserver(filePath string, log *zap.SugaredLogger) *FileAuditObserver {
 	return &FileAuditObserver{
 		filePath: filePath,
+		log:      log,
 	}
 }
 
@@ -81,17 +86,20 @@ func (f *FileAuditObserver) Notify(ctx context.Context, event *AuditEvent) error
 
 	file, err := os.OpenFile(f.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("ошибка открытия файла аудита: %w", err)
+		f.log.Errorw("Ошибка открытия файла аудита", "error", err)
+		return err
 	}
 	defer file.Close()
 
 	data, err := json.Marshal(event)
 	if err != nil {
-		return fmt.Errorf("ошибка сериализации события аудита: %w", err)
+		f.log.Errorw("Ошибка сериализации события аудита", "error", err)
+		return err
 	}
 
 	if _, err := file.Write(append(data, '\n')); err != nil {
-		return fmt.Errorf("ошибка записи в файл аудита: %w", err)
+		f.log.Errorw("Ошибка записи в файл аудита", "error", err)
+		return err
 	}
 
 	return nil
@@ -99,23 +107,27 @@ func (f *FileAuditObserver) Notify(ctx context.Context, event *AuditEvent) error
 
 type HTTPAuditObserver struct {
 	url string
+	log *zap.SugaredLogger
 }
 
-func NewHTTPAuditObserver(url string) *HTTPAuditObserver {
+func NewHTTPAuditObserver(url string, log *zap.SugaredLogger) *HTTPAuditObserver {
 	return &HTTPAuditObserver{
 		url: url,
+		log: log,
 	}
 }
 
 func (h *HTTPAuditObserver) Notify(ctx context.Context, event *AuditEvent) error {
 	data, err := json.Marshal(event)
 	if err != nil {
-		return fmt.Errorf("ошибка сериализации события аудита: %w", err)
+		h.log.Errorw("Ошибка сериализации события аудита", "error", err)
+		return err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", h.url, bytes.NewBuffer(data))
 	if err != nil {
-		return fmt.Errorf("ошибка создания HTTP запроса: %w", err)
+		h.log.Errorw("Ошибка создания HTTP запроса", "error", err)
+		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -123,11 +135,13 @@ func (h *HTTPAuditObserver) Notify(ctx context.Context, event *AuditEvent) error
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("ошибка отправки HTTP запроса: %w", err)
+		h.log.Errorw("Ошибка отправки HTTP запроса", "error", err)
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
+		h.log.Errorw("Сервер вернул ошибку", "status_code", resp.StatusCode)
 		return fmt.Errorf("сервер вернул ошибку: %d", resp.StatusCode)
 	}
 

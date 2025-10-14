@@ -17,6 +17,7 @@ import (
 	"github.com/sviatilnik/url-shortener/internal/app/middlewares"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 
 	storage := getStorage(context.Background(), connection, &conf)
 	shorter := getShortener(conf.ShortURLHost, storage)
-	auditService := getAuditService(&conf)
+	auditService := getAuditService(&conf, log)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
@@ -104,8 +105,8 @@ func getDBConnection(config *config.Config) (*sql.DB, error) {
 	return conn, nil
 }
 
-func getAuditService(config *config.Config) *audit.AuditService {
-	auditService := audit.NewAuditService()
+func getAuditService(config *config.Config, log *zap.SugaredLogger) *audit.AuditService {
+	auditService := audit.NewAuditService(log)
 
 	auditService.AddFileObserver(config.AuditFile)
 

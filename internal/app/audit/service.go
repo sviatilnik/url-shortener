@@ -2,15 +2,19 @@ package audit
 
 import (
 	"context"
+
+	"go.uber.org/zap"
 )
 
 type AuditService struct {
 	subject Subject
+	log     *zap.SugaredLogger
 }
 
-func NewAuditService() *AuditService {
+func NewAuditService(log *zap.SugaredLogger) *AuditService {
 	return &AuditService{
-		subject: NewAuditSubject(),
+		subject: NewAuditSubject(log),
+		log:     log,
 	}
 }
 
@@ -19,7 +23,7 @@ func (s *AuditService) AddFileObserver(filePath string) error {
 		return nil
 	}
 
-	observer := NewFileAuditObserver(filePath)
+	observer := NewFileAuditObserver(filePath, s.log)
 	s.subject.Attach(observer)
 	return nil
 }
@@ -29,7 +33,7 @@ func (s *AuditService) AddHTTPObserver(url string) error {
 		return nil
 	}
 
-	observer := NewHTTPAuditObserver(url)
+	observer := NewHTTPAuditObserver(url, s.log)
 	s.subject.Attach(observer)
 	return nil
 }
