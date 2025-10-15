@@ -3,22 +3,32 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"io"
 	"net/http"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 )
 
+// batchRequestItem представляет элемент запроса для пакетного создания коротких ссылок.
 type batchRequestItem struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
+	CorrelationID string `json:"correlation_id"` // Идентификатор для связи запроса и ответа
+	OriginalURL   string `json:"original_url"`   // Оригинальный URL для сокращения
 }
 
+// batchResponseItem представляет элемент ответа с созданной короткой ссылкой.
 type batchResponseItem struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
+	CorrelationID string `json:"correlation_id"` // Идентификатор из запроса
+	ShortURL      string `json:"short_url"`      // Сокращенная ссылка
 }
 
+// BatchShortLinkHandler создает HTTP-обработчик для пакетного создания коротких ссылок.
+// Обработчик принимает массив JSON-объектов с полями "correlation_id" и "original_url"
+// и возвращает массив JSON-объектов с полями "correlation_id" и "short_url".
+// Возможные коды ответа:
+//   - 201 Created - ссылки успешно созданы
+//   - 400 Bad Request - неверный формат запроса или отсутствие валидных ссылок
+//   - 500 Internal Server Error - внутренняя ошибка сервера
 func BatchShortLinkHandler(shorter *shortener.Shortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rawBody, err := io.ReadAll(r.Body)

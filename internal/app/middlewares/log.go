@@ -1,9 +1,10 @@
 package middlewares
 
 import (
-	"github.com/sviatilnik/url-shortener/internal/app/logger"
 	"net/http"
 	"time"
+
+	"github.com/sviatilnik/url-shortener/internal/app/logger"
 )
 
 func Log(next http.Handler) http.Handler {
@@ -33,8 +34,6 @@ func Log(next http.Handler) http.Handler {
 			"status", lw.data.status,
 			"duration", duration,
 			"size", lw.data.size,
-			"response_Authorization", lw.Header().Get("Authorization"),
-			"response_Cookie", r.Header.Get("Set-Cookie"),
 		)
 	})
 }

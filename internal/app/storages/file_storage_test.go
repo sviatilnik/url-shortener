@@ -2,10 +2,12 @@ package storages
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 )
 
 func TestFileStorage_BatchSave(t *testing.T) {

@@ -13,6 +13,8 @@ func (d *DefaultProvider) setValues(c *Config) error {
 	c.FileStoragePath = "store"
 	c.DatabaseDSN = ""
 	c.AuthSecret = d.getAuthSecret()
+	c.AuditFile = "audit.log"
+	c.AuditURL = ""
 	return nil
 }
 

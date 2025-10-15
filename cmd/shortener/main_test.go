@@ -3,16 +3,18 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/sviatilnik/url-shortener/internal/app/generators"
-	"github.com/sviatilnik/url-shortener/internal/app/handlers"
-	"github.com/sviatilnik/url-shortener/internal/app/shortener"
-	"github.com/sviatilnik/url-shortener/internal/app/storages"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/handlers"
+	"github.com/sviatilnik/url-shortener/internal/app/shortener"
+	"github.com/sviatilnik/url-shortener/internal/app/storages"
 )
 
 var testBaseURL = "http://my-awesome-shotener.com/"

@@ -2,9 +2,11 @@ package storages
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 )
 
 func TestInMemoryStorage_Save(t *testing.T) {

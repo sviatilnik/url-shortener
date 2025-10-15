@@ -46,5 +46,15 @@ func (env *EnvProvider) setValues(c *Config) error {
 		c.DatabaseDSN = databaseDSN
 	}
 
+	auditFile, ok := env.getter.LookupEnv("AUDIT_FILE")
+	if ok && strings.TrimSpace(auditFile) != "" {
+		c.AuditFile = auditFile
+	}
+
+	auditURL, ok := env.getter.LookupEnv("AUDIT_URL")
+	if ok && strings.TrimSpace(auditURL) != "" {
+		c.AuditURL = auditURL
+	}
+
 	return nil
 }

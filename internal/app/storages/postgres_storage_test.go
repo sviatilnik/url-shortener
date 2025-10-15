@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sviatilnik/url-shortener/internal/app/models"
 )
 
 func TestPostgresStorage_BatchSave(t *testing.T) {
