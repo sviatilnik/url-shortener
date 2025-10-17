@@ -12,14 +12,14 @@ import (
 // Используется для тестирования и разработки.
 // Хранилище является потокобезопасным благодаря использованию RWMutex.
 type InMemoryStorage struct {
-	store map[string]string // Карта для хранения коротких кодов и оригинальных URL
-	mu    sync.RWMutex      // Мьютекс для обеспечения потокобезопасности
+	store map[string]*models.Link // Карта для хранения коротких кодов и полных объектов Link
+	mu    sync.RWMutex            // Мьютекс для обеспечения потокобезопасности
 }
 
 // NewInMemoryStorage создает новый экземпляр хранилища в памяти.
 func NewInMemoryStorage() URLStorage {
 	return &InMemoryStorage{
-		store: make(map[string]string),
+		store: make(map[string]*models.Link),
 	}
 }
 
@@ -33,9 +33,18 @@ func (i *InMemoryStorage) Save(ctx context.Context, link *models.Link) (*models.
 		return nil, ctx.Err()
 	default:
 		i.mu.Lock()
-		i.store[link.ID] = link.OriginalURL
+		// Создаем копию ссылки для хранения
+		linkCopy := &models.Link{
+			ID:          link.ID,
+			ShortCode:   link.ShortCode,
+			ShortURL:    link.ShortURL,
+			OriginalURL: link.OriginalURL,
+			UserID:      link.UserID,
+			IsDeleted:   link.IsDeleted,
+		}
+		i.store[link.ID] = linkCopy
 		i.mu.Unlock()
-		return link, nil
+		return linkCopy, nil
 	}
 }
 
@@ -53,7 +62,16 @@ func (i *InMemoryStorage) BatchSave(ctx context.Context, links []*models.Link) e
 				i.mu.Unlock()
 				return ErrEmptyKey
 			}
-			i.store[link.ID] = link.OriginalURL
+			// Создаем копию ссылки для хранения
+			linkCopy := &models.Link{
+				ID:          link.ID,
+				ShortCode:   link.ShortCode,
+				ShortURL:    link.ShortURL,
+				OriginalURL: link.OriginalURL,
+				UserID:      link.UserID,
+				IsDeleted:   link.IsDeleted,
+			}
+			i.store[link.ID] = linkCopy
 		}
 		i.mu.Unlock()
 		return nil
@@ -66,17 +84,26 @@ func (i *InMemoryStorage) Get(ctx context.Context, shortCode string) (*models.Li
 		return nil, ctx.Err()
 	default:
 		i.mu.RLock()
-		originalURL, ok := i.store[shortCode]
+		link, ok := i.store[shortCode]
 		i.mu.RUnlock()
 
 		if !ok {
 			return nil, ErrKeyNotFound
 		}
 
+		// Проверяем, не удалена ли ссылка
+		if link.IsDeleted {
+			return nil, ErrKeyNotFound
+		}
+
+		// Возвращаем копию ссылки
 		return &models.Link{
-			ID:          shortCode,
-			OriginalURL: originalURL,
-			ShortCode:   shortCode,
+			ID:          link.ID,
+			ShortCode:   link.ShortCode,
+			ShortURL:    link.ShortURL,
+			OriginalURL: link.OriginalURL,
+			UserID:      link.UserID,
+			IsDeleted:   link.IsDeleted,
 		}, nil
 	}
 }
@@ -86,9 +113,27 @@ func (i *InMemoryStorage) GetUserLinks(ctx context.Context, userID string) ([]*m
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		// Для простоты возвращаем пустой список
-		// В реальной реализации нужно хранить информацию о пользователях
-		return []*models.Link{}, nil
+		i.mu.RLock()
+		var userLinks []*models.Link
+
+		for _, link := range i.store {
+			// Проверяем, что ссылка принадлежит пользователю и не удалена
+			if link.UserID == userID && !link.IsDeleted {
+				// Создаем копию ссылки
+				linkCopy := &models.Link{
+					ID:          link.ID,
+					ShortCode:   link.ShortCode,
+					ShortURL:    link.ShortURL,
+					OriginalURL: link.OriginalURL,
+					UserID:      link.UserID,
+					IsDeleted:   link.IsDeleted,
+				}
+				userLinks = append(userLinks, linkCopy)
+			}
+		}
+		i.mu.RUnlock()
+
+		return userLinks, nil
 	}
 }
 
@@ -97,8 +142,22 @@ func (i *InMemoryStorage) Delete(ctx context.Context, IDs []string, userID strin
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		// Для простоты просто возвращаем nil
-		// В реальной реализации нужно помечать ссылки как удаленные
+		if len(IDs) == 0 {
+			return nil
+		}
+
+		i.mu.Lock()
+		for _, id := range IDs {
+			if link, exists := i.store[id]; exists {
+				// Проверяем, что ссылка принадлежит пользователю
+				if link.UserID == userID {
+					// Помечаем ссылку как удаленную (soft delete)
+					link.IsDeleted = true
+				}
+			}
+		}
+		i.mu.Unlock()
+
 		return nil
 	}
 }

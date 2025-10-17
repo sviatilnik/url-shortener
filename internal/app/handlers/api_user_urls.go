@@ -2,14 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"strings"
 
 	"github.com/sviatilnik/url-shortener/internal/app/models"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
-	"github.com/sviatilnik/url-shortener/internal/app/storages"
 )
 
 // userURLsResponseItem представляет элемент ответа со списком URL пользователя.
@@ -39,8 +37,8 @@ func UserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		}
 
 		userLinks, err := shorter.GetUserLinks(r.Context(), userID)
-		if err != nil && errors.Is(err, storages.ErrNotImplemented) {
-			w.WriteHeader(http.StatusOK)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		if len(userLinks) == 0 {

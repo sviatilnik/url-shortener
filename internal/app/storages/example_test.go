@@ -156,41 +156,8 @@ func ExampleInMemoryStorage_GetUserLinks() {
 	// Создаем хранилище
 	storage := storages.NewInMemoryStorage()
 
-	// Создаем контекст
+	// Создаем контекст (без создания ссылок)
 	ctx := context.Background()
-
-	// Создаем ссылки для разных пользователей
-	user1Links := []*models.Link{
-		{
-			ID:          "user1_link1",
-			ShortCode:   "abc123",
-			OriginalURL: "https://example.com/user1_link1",
-			UserID:      "user1",
-		},
-		{
-			ID:          "user1_link2",
-			ShortCode:   "def456",
-			OriginalURL: "https://example.com/user1_link2",
-			UserID:      "user1",
-		},
-	}
-
-	user2Links := []*models.Link{
-		{
-			ID:          "user2_link1",
-			ShortCode:   "ghi789",
-			OriginalURL: "https://example.com/user2_link1",
-			UserID:      "user2",
-		},
-	}
-
-	// Сохраняем ссылки
-	for _, link := range user1Links {
-		storage.Save(ctx, link)
-	}
-	for _, link := range user2Links {
-		storage.Save(ctx, link)
-	}
 
 	// Получаем ссылки пользователя 1
 	user1Retrieved, err := storage.GetUserLinks(ctx, "user1")
