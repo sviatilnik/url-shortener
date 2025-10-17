@@ -60,6 +60,5 @@ func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 }
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	r.ResponseWriter.WriteHeader(statusCode)
 	r.data.status = statusCode
 }

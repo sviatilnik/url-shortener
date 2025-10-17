@@ -109,7 +109,7 @@ func verifySignUserID(key, token string) bool {
 func getUserID(key, tokenString string) string {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
-		func(t *jwt.Token) (interface{}, error) {
+		func(t *jwt.Token) (any, error) {
 			return []byte(key), nil
 		})
 	if err != nil {
