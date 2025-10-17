@@ -8,20 +8,21 @@ import (
 
 var once sync.Once
 var instance *zap.SugaredLogger
+var loggerErr error
 
-func getInstance() *zap.SugaredLogger {
+func getInstance() (*zap.SugaredLogger, error) {
 	once.Do(func() {
-		logger, err := zap.NewProduction()
-		if err != nil {
-			panic(err)
+		logger, loggerErr := zap.NewProduction()
+		if loggerErr != nil {
+			return
 		}
 
 		instance = logger.Sugar()
 	})
 
-	return instance
+	return instance, loggerErr
 }
 
-func NewLogger() *zap.SugaredLogger {
+func NewLogger() (*zap.SugaredLogger, error) {
 	return getInstance()
 }
