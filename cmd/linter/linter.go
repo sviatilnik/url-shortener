@@ -8,13 +8,14 @@ import (
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
+var Analyzer = &analysis.Analyzer{
+	Name: "linter",
+	Doc:  "Check for panic and call os.Exit/log.Fatal outside of main function",
+	Run:  run,
+}
+
 func main() {
-	checker := &analysis.Analyzer{
-		Name: "linter",
-		Doc:  "Check for panic and call os.Exit/log.Fatal outside of main function",
-		Run:  run,
-	}
-	singlechecker.Main(checker)
+	singlechecker.Main(Analyzer)
 }
 
 func run(pass *analysis.Pass) (any, error) {
