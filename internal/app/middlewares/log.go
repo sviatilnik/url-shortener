@@ -9,7 +9,12 @@ import (
 
 func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logg := logger.NewLogger()
+		logg, err := logger.NewLogger()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
 		start := time.Now()
 
