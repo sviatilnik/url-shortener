@@ -46,7 +46,7 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 			authCookie, err := r.Cookie("Authorization")
 			if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
 				!verifySignUserID(key, authCookie.Value) {
-				userID, err := generateUserID()
+				userID, err = generateUserID()
 				if err != nil {
 					m.logger.Error("Failed to generate user ID", "error", err)
 					nextHandler.ServeHTTP(w, r)
