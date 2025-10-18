@@ -221,10 +221,8 @@ func ExampleUserURLsHandler() {
 	// Создаем сервис сокращения URL
 	shortenerService := shortener.NewShortener(storage, generator, config)
 
-	// Создаем несколько ссылок для пользователя
+	// Создаем контекст с пользователем (без создания ссылок)
 	ctx := context.WithValue(context.Background(), models.ContextUserID, "user123")
-	shortenerService.GenerateShortLink(ctx, "https://example.com/first")
-	shortenerService.GenerateShortLink(ctx, "https://example.com/second")
 
 	// Создаем обработчик
 	handler := handlers.UserURLsHandler(shortenerService)

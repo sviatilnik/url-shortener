@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 
 	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/models"
@@ -19,6 +20,7 @@ const TokenExp = time.Hour * 3
 
 type AuthMiddleware struct {
 	config *config.Config
+	logger *zap.SugaredLogger
 }
 
 type Claims struct {
@@ -26,8 +28,11 @@ type Claims struct {
 	UserID string
 }
 
-func NewAuthMiddleware(config *config.Config) *AuthMiddleware {
-	return &AuthMiddleware{config: config}
+func NewAuthMiddleware(config *config.Config, logger *zap.SugaredLogger) *AuthMiddleware {
+	return &AuthMiddleware{
+		config: config,
+		logger: logger,
+	}
 }
 
 func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
@@ -41,7 +46,13 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 			authCookie, err := r.Cookie("Authorization")
 			if errors.Is(err, http.ErrNoCookie) || strings.TrimSpace(authCookie.Value) == "" ||
 				!verifySignUserID(key, authCookie.Value) {
-				userID = generateUserID()
+				userID, err = generateUserID()
+				if err != nil {
+					m.logger.Error("Failed to generate user ID", "error", err)
+					nextHandler.ServeHTTP(w, r)
+					return
+				}
+
 				userIDSign := signUserID(key, userID)
 				w.Header().Set("Authorization", userIDSign)
 
@@ -66,13 +77,13 @@ func (m *AuthMiddleware) Auth(nextHandler http.Handler) http.Handler {
 	})
 }
 
-func generateUserID() string {
+func generateUserID() (string, error) {
 	userID := make([]byte, 16)
 	if _, err := rand.Read(userID); err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return hex.EncodeToString(userID)
+	return hex.EncodeToString(userID), nil
 }
 
 func signUserID(key, userID string) string {

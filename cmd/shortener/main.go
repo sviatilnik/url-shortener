@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"net/http"
 	"time"
 
@@ -22,21 +23,24 @@ import (
 
 func main() {
 	conf := getConfig()
-	log := logger.NewLogger()
+	zapLogger, err := logger.NewLogger()
+	if err != nil {
+		log.Fatalf("Failed to create logger: %v", err)
+	}
 
 	connection, connErr := getDBConnection(&conf)
 	if connErr != nil {
-		log.Info("Failed to connect to database")
+		zapLogger.Info("Failed to connect to database")
 	}
 
 	storage := getStorage(context.Background(), connection, &conf)
 	shorter := getShortener(conf.ShortURLHost, storage)
-	auditService := getAuditService(&conf, log)
+	auditService := getAuditService(&conf, zapLogger)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
-	r.Use(middlewares.NewAuthMiddleware(&conf).Auth)
+	r.Use(middlewares.NewAuthMiddleware(&conf, zapLogger).Auth)
 	r.Use(middlewares.NewAuditMiddleware(auditService).Audit)
 
 	if connection != nil {
@@ -49,9 +53,9 @@ func main() {
 	r.Get("/api/user/urls", handlers.UserURLsHandler(shorter))
 	r.Delete("/api/user/urls", handlers.DeleteUserURLsHandler(shorter))
 
-	err := http.ListenAndServe(conf.Host, r)
+	err = http.ListenAndServe(conf.Host, r)
 	if err != nil {
-		log.Fatalw("Error starting server", "error", err)
+		zapLogger.Fatalw("Error starting server", "error", err)
 	}
 }
 
