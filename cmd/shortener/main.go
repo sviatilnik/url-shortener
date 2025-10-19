@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -21,7 +22,15 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 func main() {
+	printBuildInfo()
+
 	conf := getConfig()
 	zapLogger, err := logger.NewLogger()
 	if err != nil {
@@ -117,4 +126,25 @@ func getAuditService(config *config.Config, log *zap.SugaredLogger) *audit.Audit
 	auditService.AddHTTPObserver(config.AuditURL)
 
 	return auditService
+}
+
+func printBuildInfo() {
+	version := buildVersion
+	if version == "" {
+		version = "N/A"
+	}
+
+	date := buildDate
+	if date == "" {
+		date = "N/A"
+	}
+
+	commit := buildCommit
+	if commit == "" {
+		commit = "N/A"
+	}
+
+	fmt.Printf("Build version: %s\n", version)
+	fmt.Printf("Build date: %s\n", date)
+	fmt.Printf("Build commit: %s\n", commit)
 }
