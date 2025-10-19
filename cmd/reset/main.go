@@ -283,8 +283,8 @@ func generateResetMethod(s StructInfo) string {
 			// Для указателей на структуры проверяем, есть ли метод Reset
 			if field.IsStruct {
 				buf.WriteString(fmt.Sprintf("\t\tif resetter, ok := interface{}(s.%s).(interface{ Reset() }); ok {\n", field.Name))
-				buf.WriteString(fmt.Sprintf("\t\t\tresetter.Reset()\n"))
-				buf.WriteString(fmt.Sprintf("\t\t}\n"))
+				buf.WriteString("\t\t\tresetter.Reset()\n")
+				buf.WriteString("\t\t}\n")
 				buf.WriteString(fmt.Sprintf("\t\ts.%s = nil\n", field.Name))
 			} else {
 				buf.WriteString(generateFieldReset(field, "s."+field.Name, 2))
