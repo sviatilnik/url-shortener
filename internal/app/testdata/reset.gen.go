@@ -2,21 +2,13 @@
 
 package testdata
 
-// Reset сбрасывает состояние структуры TestConfig к начальным значениям
 func (s *TestConfig) Reset() {
-	// Сброс поля BaseURL
 	s.BaseURL = ""
-	// Сброс поля MaxRetries
 	s.MaxRetries = 0
-	// Сброс поля Timeout
 	s.Timeout = 0
-	// Сброс поля Enabled
 	s.Enabled = false
-	// Сброс поля Headers
 	clear(s.Headers)
-	// Сброс поля Options
 	s.Options = s.Options[:0]
-	// Сброс поля Logger
 	if s.Logger != nil {
 		if resetter, ok := interface{}(s.Logger).(interface{ Reset() }); ok {
 			resetter.Reset()
@@ -25,12 +17,8 @@ func (s *TestConfig) Reset() {
 	}
 }
 
-// Reset сбрасывает состояние структуры TestLogger к начальным значениям
 func (s *TestLogger) Reset() {
-	// Сброс поля Level
 	s.Level = ""
-	// Сброс поля Format
 	s.Format = ""
-	// Сброс поля Output
 	s.Output = s.Output[:0]
 }
