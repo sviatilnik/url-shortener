@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -37,12 +39,15 @@ func main() {
 		log.Fatalf("Failed to create logger: %v", err)
 	}
 
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
 	connection, connErr := getDBConnection(&conf)
 	if connErr != nil {
 		zapLogger.Info("Failed to connect to database")
 	}
 
-	storage := getStorage(context.Background(), connection, &conf)
+	storage := getStorage(ctx, connection, &conf)
 	shorter := getShortener(conf.ShortURLHost, storage)
 	auditService := getAuditService(&conf, zapLogger)
 
@@ -62,10 +67,37 @@ func main() {
 	r.Get("/api/user/urls", handlers.UserURLsHandler(shorter))
 	r.Delete("/api/user/urls", handlers.DeleteUserURLsHandler(shorter))
 
-	err = http.ListenAndServe(conf.Host, r)
-	if err != nil {
-		zapLogger.Fatalw("Error starting server", "error", err)
+	server := &http.Server{
+		Addr:    conf.Host,
+		Handler: r,
 	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			zapLogger.Fatalw("Error starting server", "error", err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	zapLogger.Info("Shutting down server")
+
+	timeout := 10 * time.Second
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if err := server.Shutdown(ctxShutdown); err != nil {
+		zapLogger.Fatalw("Error shutting down server", "error", err)
+	}
+
+	if connection != nil {
+		if err := connection.Close(); err != nil {
+			zapLogger.Fatalw("Error closing database connection", "error", err)
+		}
+		zapLogger.Info("Database connection closed successfully")
+	}
+
+	zapLogger.Info("Server shut down successfully")
 }
 
 func getShortener(baseURL string, storage storages.URLStorage) *shortener.Shortener {
