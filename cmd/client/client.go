@@ -13,7 +13,7 @@ import (
 func main() {
 	endpoint := "http://localhost:8080/"
 
-	fmt.Println("Введите длинный URL")
+	fmt.Println("Enter long URL")
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -34,11 +34,11 @@ func main() {
 
 	response, err := client.Do(request)
 	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
+		log.Fatalf("Request failed: %v", err)
 	}
 
-	fmt.Println("Статус-код ", response.Status)
 	defer response.Body.Close()
+	fmt.Println("Status code: ", response.Status)
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
