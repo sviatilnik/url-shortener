@@ -47,9 +47,21 @@ func TestInMemoryStorage_Save(t *testing.T) {
 }
 
 func TestInMemoryStorage_Get(t *testing.T) {
-	store := make(map[string]string)
-	store["key"] = "value"
-	store["key2"] = "value2"
+	store := make(map[string]*models.Link)
+	store["key"] = &models.Link{
+		ID:          "key",
+		ShortCode:   "key",
+		OriginalURL: "value",
+		UserID:      "user1",
+		IsDeleted:   false,
+	}
+	store["key2"] = &models.Link{
+		ID:          "key2",
+		ShortCode:   "key2",
+		OriginalURL: "value2",
+		UserID:      "user1",
+		IsDeleted:   false,
+	}
 
 	tests := []struct {
 		name    string

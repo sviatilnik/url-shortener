@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -20,23 +24,37 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 func main() {
+	printBuildInfo()
+
 	conf := getConfig()
-	log := logger.NewLogger()
+	zapLogger, err := logger.NewLogger()
+	if err != nil {
+		log.Fatalf("Failed to create logger: %v", err)
+	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 
 	connection, connErr := getDBConnection(&conf)
 	if connErr != nil {
-		log.Info("Failed to connect to database")
+		zapLogger.Info("Failed to connect to database")
 	}
 
-	storage := getStorage(context.Background(), connection, &conf)
+	storage := getStorage(ctx, connection, &conf)
 	shorter := getShortener(conf.ShortURLHost, storage)
-	auditService := getAuditService(&conf, log)
+	auditService := getAuditService(&conf, zapLogger)
 
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
-	r.Use(middlewares.NewAuthMiddleware(&conf).Auth)
+	r.Use(middlewares.NewAuthMiddleware(&conf, zapLogger).Auth)
 	r.Use(middlewares.NewAuditMiddleware(auditService).Audit)
 
 	if connection != nil {
@@ -49,10 +67,37 @@ func main() {
 	r.Get("/api/user/urls", handlers.UserURLsHandler(shorter))
 	r.Delete("/api/user/urls", handlers.DeleteUserURLsHandler(shorter))
 
-	err := http.ListenAndServe(conf.Host, r)
-	if err != nil {
-		log.Fatalw("Error starting server", "error", err)
+	server := &http.Server{
+		Addr:    conf.Host,
+		Handler: r,
 	}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			zapLogger.Fatalw("Error starting server", "error", err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	zapLogger.Info("Shutting down server")
+
+	timeout := 10 * time.Second
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if err := server.Shutdown(ctxShutdown); err != nil {
+		zapLogger.Fatalw("Error shutting down server", "error", err)
+	}
+
+	if connection != nil {
+		if err := connection.Close(); err != nil {
+			zapLogger.Fatalw("Error closing database connection", "error", err)
+		}
+		zapLogger.Info("Database connection closed successfully")
+	}
+
+	zapLogger.Info("Server shut down successfully")
 }
 
 func getShortener(baseURL string, storage storages.URLStorage) *shortener.Shortener {
@@ -113,4 +158,25 @@ func getAuditService(config *config.Config, log *zap.SugaredLogger) *audit.Audit
 	auditService.AddHTTPObserver(config.AuditURL)
 
 	return auditService
+}
+
+func printBuildInfo() {
+	version := buildVersion
+	if version == "" {
+		version = "N/A"
+	}
+
+	date := buildDate
+	if date == "" {
+		date = "N/A"
+	}
+
+	commit := buildCommit
+	if commit == "" {
+		commit = "N/A"
+	}
+
+	fmt.Printf("Build version: %s\n", version)
+	fmt.Printf("Build date: %s\n", date)
+	fmt.Printf("Build commit: %s\n", commit)
 }
