@@ -33,6 +33,7 @@ func UserURLsHandler(shorter *shortener.Shortener) http.HandlerFunc {
 		userID := tmpUserID.(string)
 		if userID == "" || strings.TrimSpace(userID) == "" {
 			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 
 		userLinks, err := shorter.GetUserLinks(r.Context(), userID)
