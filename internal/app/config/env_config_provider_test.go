@@ -21,6 +21,7 @@ func TestEnvProvider(t *testing.T) {
 	m.EXPECT().LookupEnv("FILE_STORAGE_PATH").Return("/tmp/file_storage", true).AnyTimes()
 	m.EXPECT().LookupEnv("AUDIT_FILE").Return("audit-file", true).AnyTimes()
 	m.EXPECT().LookupEnv("AUDIT_URL").Return("audit-url", true).AnyTimes()
+	m.EXPECT().LookupEnv("ENABLE_HTTPS").Return("true", true).AnyTimes()
 
 	config := NewConfig(NewEnvProvider(m))
 
@@ -28,4 +29,5 @@ func TestEnvProvider(t *testing.T) {
 	assert.Equal(t, "https://short.google.com", config.ShortURLHost)
 	assert.Equal(t, "database_dsn", config.DatabaseDSN)
 	assert.Equal(t, "/tmp/file_storage", config.FileStoragePath)
+	assert.Equal(t, true, config.EnabledHTTPS)
 }
