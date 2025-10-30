@@ -56,5 +56,10 @@ func (env *EnvProvider) setValues(c *Config) error {
 		c.AuditURL = auditURL
 	}
 
+	enabledHTTPS, ok := env.getter.LookupEnv("ENABLE_HTTPS")
+	if ok && strings.TrimSpace(enabledHTTPS) != "" {
+		c.EnabledHTTPS = enabledHTTPS == "true"
+	}
+
 	return nil
 }

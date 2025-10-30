@@ -73,9 +73,17 @@ func main() {
 	}
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		var err error
+		if conf.EnabledHTTPS {
+			err = server.ListenAndServeTLS("server.crt", "server.key")
+		} else {
+			err = server.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
 			zapLogger.Fatalw("Error starting server", "error", err)
 		}
+
 	}()
 
 	<-ctx.Done()
