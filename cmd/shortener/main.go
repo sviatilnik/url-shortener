@@ -40,7 +40,7 @@ func main() {
 		log.Fatalf("Failed to create logger: %v", err)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
 	connection, connErr := getDBConnection(&conf)
@@ -91,19 +91,24 @@ func main() {
 
 	zapLogger.Info("Shutting down server")
 
+	// Останавливаем прием новых соединений
 	timeout := 10 * time.Second
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	// Останавливаем HTTP сервер, дожидаемся завершения всех активных запросов
 	if err := server.Shutdown(ctxShutdown); err != nil {
-		zapLogger.Fatalw("Error shutting down server", "error", err)
+		zapLogger.Errorw("Error shutting down server", "error", err)
+	} else {
+		zapLogger.Info("HTTP server shut down successfully")
 	}
-
+	// Закрываем соединение с базой данных
 	if connection != nil {
 		if err := connection.Close(); err != nil {
-			zapLogger.Fatalw("Error closing database connection", "error", err)
+			zapLogger.Errorw("Error closing database connection", "error", err)
+		} else {
+			zapLogger.Info("Database connection closed successfully")
 		}
-		zapLogger.Info("Database connection closed successfully")
 	}
 
 	zapLogger.Info("Server shut down successfully")
