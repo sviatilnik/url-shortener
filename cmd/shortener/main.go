@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -135,11 +136,46 @@ func getStorage(ctx context.Context, db *sql.DB, config *config.Config) storages
 }
 
 func getConfig() config.Config {
+	configFilePath := getConfigFilePath()
+
+	var jsonProvider config.Provider
+	if configFilePath != "" {
+		jsonProvider = config.NewJSONConfigProvider(configFilePath)
+	} else {
+		jsonProvider = config.NewJSONConfigProvider("")
+	}
+
 	return config.NewConfig(
 		&config.DefaultProvider{},
+		jsonProvider,
 		config.NewFlagProvider(),
 		config.NewEnvProvider(&config.OSEnvGetter{}),
 	)
+}
+
+func getConfigFilePath() string {
+	if configPath := os.Getenv("CONFIG"); configPath != "" {
+		return configPath
+	}
+
+	for i := 0; i < len(os.Args); i++ {
+		arg := os.Args[i]
+
+		if len(arg) > 3 && arg[:2] == "-c" && arg[2] == '=' {
+			return arg[3:]
+		}
+		if len(arg) > 8 && arg[:7] == "-config" && arg[7] == '=' {
+			return arg[8:]
+		}
+
+		if arg == "-c" || arg == "-config" {
+			if i+1 < len(os.Args) {
+				return os.Args[i+1]
+			}
+		}
+	}
+
+	return ""
 }
 
 func getDBConnection(config *config.Config) (*sql.DB, error) {

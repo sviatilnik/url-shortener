@@ -14,11 +14,8 @@ func ExampleNewConfig() {
 	// Создаем провайдер переменных окружения
 	envProvider := config.NewEnvProvider(&config.OSEnvGetter{})
 
-	// Создаем провайдер флагов командной строки
-	flagProvider := config.NewFlagProvider()
-
-	// Создаем конфигурацию, объединяя все провайдеры
-	conf := config.NewConfig(defaultProvider, envProvider, flagProvider)
+	// Создаем конфигурацию, объединяя провайдеры
+	conf := config.NewConfig(defaultProvider, envProvider)
 
 	fmt.Printf("Host: %s\n", conf.Host)
 	fmt.Printf("ShortURLHost: %s\n", conf.ShortURLHost)
