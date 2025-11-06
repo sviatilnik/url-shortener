@@ -10,6 +10,7 @@ type Config struct {
 	AuthSecret      string // Секретный ключ для аутентификации
 	AuditFile       string // Путь к файлу аудита
 	AuditURL        string // URL для отправки аудита
+	EnabledHTTPS    bool   // Сервер будет использовать SSL
 }
 
 // NewConfig создает новую конфигурацию, объединяя значения из переданных провайдеров.

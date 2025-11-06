@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -39,7 +40,7 @@ func main() {
 		log.Fatalf("Failed to create logger: %v", err)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
 	connection, connErr := getDBConnection(&conf)
@@ -73,28 +74,41 @@ func main() {
 	}
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		var err error
+		if conf.EnabledHTTPS {
+			err = server.ListenAndServeTLS("server.crt", "server.key")
+		} else {
+			err = server.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
 			zapLogger.Fatalw("Error starting server", "error", err)
 		}
+
 	}()
 
 	<-ctx.Done()
 
 	zapLogger.Info("Shutting down server")
 
+	// Останавливаем прием новых соединений
 	timeout := 10 * time.Second
 	ctxShutdown, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	// Останавливаем HTTP сервер, дожидаемся завершения всех активных запросов
 	if err := server.Shutdown(ctxShutdown); err != nil {
-		zapLogger.Fatalw("Error shutting down server", "error", err)
+		zapLogger.Errorw("Error shutting down server", "error", err)
+	} else {
+		zapLogger.Info("HTTP server shut down successfully")
 	}
-
+	// Закрываем соединение с базой данных
 	if connection != nil {
 		if err := connection.Close(); err != nil {
-			zapLogger.Fatalw("Error closing database connection", "error", err)
+			zapLogger.Errorw("Error closing database connection", "error", err)
+		} else {
+			zapLogger.Info("Database connection closed successfully")
 		}
-		zapLogger.Info("Database connection closed successfully")
 	}
 
 	zapLogger.Info("Server shut down successfully")
@@ -127,11 +141,46 @@ func getStorage(ctx context.Context, db *sql.DB, config *config.Config) storages
 }
 
 func getConfig() config.Config {
+	configFilePath := getConfigFilePath()
+
+	var jsonProvider config.Provider
+	if configFilePath != "" {
+		jsonProvider = config.NewJSONConfigProvider(configFilePath)
+	} else {
+		jsonProvider = config.NewJSONConfigProvider("")
+	}
+
 	return config.NewConfig(
 		&config.DefaultProvider{},
+		jsonProvider,
 		config.NewFlagProvider(),
 		config.NewEnvProvider(&config.OSEnvGetter{}),
 	)
+}
+
+func getConfigFilePath() string {
+	if configPath := os.Getenv("CONFIG"); configPath != "" {
+		return configPath
+	}
+
+	for i := 0; i < len(os.Args); i++ {
+		arg := os.Args[i]
+
+		if len(arg) > 3 && arg[:2] == "-c" && arg[2] == '=' {
+			return arg[3:]
+		}
+		if len(arg) > 8 && arg[:7] == "-config" && arg[7] == '=' {
+			return arg[8:]
+		}
+
+		if arg == "-c" || arg == "-config" {
+			if i+1 < len(os.Args) {
+				return os.Args[i+1]
+			}
+		}
+	}
+
+	return ""
 }
 
 func getDBConnection(config *config.Config) (*sql.DB, error) {

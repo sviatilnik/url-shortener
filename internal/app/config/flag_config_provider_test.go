@@ -27,6 +27,7 @@ func TestFlagProvider(t *testing.T) {
 		DatabaseDSNFlagName:     "td",
 		AuditFileFlagName:       "taf",
 		AuditURLFlagName:        "tau",
+		EnablesHTTPSFlagName:    "ts",
 	})
 
 	assert.Equal(t, "https://google.com", config.Host)

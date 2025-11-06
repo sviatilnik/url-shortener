@@ -14,6 +14,7 @@ type FlagProvider struct {
 	DatabaseDSNFlagName     string
 	AuditFileFlagName       string
 	AuditURLFlagName        string
+	EnablesHTTPSFlagName    string
 }
 
 func NewFlagProvider() *FlagProvider {
@@ -24,6 +25,7 @@ func NewFlagProvider() *FlagProvider {
 		DatabaseDSNFlagName:     "d",
 		AuditFileFlagName:       "audit-file",
 		AuditURLFlagName:        "audit-url",
+		EnablesHTTPSFlagName:    "s",
 	}
 }
 
@@ -34,6 +36,7 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 	databaseDSN := flag.String(flagConf.DatabaseDSNFlagName, "", "Строка подлючения к БД")
 	auditFile := flag.String(flagConf.AuditFileFlagName, "", "Путь к файлу для аудита")
 	auditURL := flag.String(flagConf.AuditURLFlagName, "", "URL удаленного сервера для аудита")
+	enableHTTPS := flag.Bool(flagConf.EnablesHTTPSFlagName, false, "Включить работу HTTPS")
 	flag.Parse()
 
 	if strings.TrimSpace(*host) != "" {
@@ -59,6 +62,8 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 	if strings.TrimSpace(*auditURL) != "" {
 		c.AuditURL = *auditURL
 	}
+
+	c.EnabledHTTPS = *enableHTTPS
 
 	return nil
 }
