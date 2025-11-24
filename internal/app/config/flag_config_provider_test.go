@@ -19,6 +19,7 @@ func TestFlagProvider(t *testing.T) {
 		"-td=database_dsn",
 		"-taf=audit-file",
 		"-tau=audit-url",
+		"-tt=192.168.1.0/24",
 	}
 	config := NewConfig(&FlagProvider{
 		HostFlagName:            "ta",
@@ -28,6 +29,7 @@ func TestFlagProvider(t *testing.T) {
 		AuditFileFlagName:       "taf",
 		AuditURLFlagName:        "tau",
 		EnablesHTTPSFlagName:    "ts",
+		TrustedSubnetFlagName:   "tt",
 	})
 
 	assert.Equal(t, "https://google.com", config.Host)

@@ -44,6 +44,7 @@ func (j *JSONConfigProvider) setValues(c *Config) error {
 		AuditFile       string `json:"audit_file"`
 		AuditURL        string `json:"audit_url"`
 		EnabledHTTPS    bool   `json:"enable_https"`
+		TrustedSubnet   string `json:"trusted_subnet"`
 	}
 
 	if err := json.Unmarshal(data, &jsonConfig); err != nil {
@@ -80,6 +81,10 @@ func (j *JSONConfigProvider) setValues(c *Config) error {
 
 	if jsonConfig.EnabledHTTPS {
 		c.EnabledHTTPS = jsonConfig.EnabledHTTPS
+	}
+
+	if strings.TrimSpace(jsonConfig.TrustedSubnet) != "" {
+		c.TrustedSubnet = jsonConfig.TrustedSubnet
 	}
 
 	return nil

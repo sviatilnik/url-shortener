@@ -22,6 +22,7 @@ func TestEnvProvider(t *testing.T) {
 	m.EXPECT().LookupEnv("AUDIT_FILE").Return("audit-file", true).AnyTimes()
 	m.EXPECT().LookupEnv("AUDIT_URL").Return("audit-url", true).AnyTimes()
 	m.EXPECT().LookupEnv("ENABLE_HTTPS").Return("true", true).AnyTimes()
+	m.EXPECT().LookupEnv("TRUSTED_SUBNET").Return("192.168.1.0/24", true).AnyTimes()
 
 	config := NewConfig(NewEnvProvider(m))
 
@@ -30,4 +31,5 @@ func TestEnvProvider(t *testing.T) {
 	assert.Equal(t, "database_dsn", config.DatabaseDSN)
 	assert.Equal(t, "/tmp/file_storage", config.FileStoragePath)
 	assert.Equal(t, true, config.EnabledHTTPS)
+	assert.Equal(t, "192.168.1.0/24", config.TrustedSubnet)
 }

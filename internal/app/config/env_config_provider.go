@@ -61,5 +61,10 @@ func (env *EnvProvider) setValues(c *Config) error {
 		c.EnabledHTTPS = enabledHTTPS == "true"
 	}
 
+	trustedSubnet, ok := env.getter.LookupEnv("TRUSTED_SUBNET")
+	if ok && strings.TrimSpace(trustedSubnet) != "" {
+		c.TrustedSubnet = trustedSubnet
+	}
+
 	return nil
 }

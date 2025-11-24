@@ -3,14 +3,15 @@ package config
 // Config представляет конфигурацию приложения.
 // Содержит все необходимые параметры для работы сервиса сокращения URL.
 type Config struct {
-	Host            string // Адрес и порт для запуска HTTP-сервера
-	ShortURLHost    string // Базовый URL для создания коротких ссылок
-	FileStoragePath string // Путь к файлу для хранения данных (если используется файловое хранилище)
-	DatabaseDSN     string // Строка подключения к базе данных
+	Host            string `env:"SERVER_ADDRESS"`    // Адрес и порт для запуска HTTP-сервера
+	ShortURLHost    string `env:"BASE_URL"`          // Базовый URL для создания коротких ссылок
+	FileStoragePath string `env:"FILE_STORAGE_PATH"` // Путь к файлу для хранения данных (если используется файловое хранилище)
+	DatabaseDSN     string `env:"DATABASE_DSN"`      // Строка подключения к базе данных
 	AuthSecret      string // Секретный ключ для аутентификации
-	AuditFile       string // Путь к файлу аудита
-	AuditURL        string // URL для отправки аудита
-	EnabledHTTPS    bool   // Сервер будет использовать SSL
+	AuditFile       string `env:"AUDIT_FILE"`     // Путь к файлу аудита
+	AuditURL        string `env:"AUDIT_URL"`      // URL для отправки аудита
+	EnabledHTTPS    bool   `env:"ENABLE_HTTPS"`   // Сервер будет использовать SSL
+	TrustedSubnet   string `env:"TRUSTED_SUBNET"` // CIDR подсеть для доступа к внутренним эндпоинтам
 }
 
 // NewConfig создает новую конфигурацию, объединяя значения из переданных провайдеров.
