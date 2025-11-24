@@ -68,6 +68,11 @@ func main() {
 	r.Get("/api/user/urls", handlers.UserURLsHandler(shorter))
 	r.Delete("/api/user/urls", handlers.DeleteUserURLsHandler(shorter))
 
+	r.Route("/api/internal", func(r chi.Router) {
+		r.Use(middlewares.TrustedSubnetMiddleware(&conf))
+		r.Get("/stats", handlers.InternalStatsHandler(shorter))
+	})
+
 	server := &http.Server{
 		Addr:    conf.Host,
 		Handler: r,

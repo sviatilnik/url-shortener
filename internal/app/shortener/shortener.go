@@ -164,3 +164,8 @@ func (s *Shortener) GetUserLinks(ctx context.Context, userID string) ([]*models.
 func (s *Shortener) DeleteUserLinks(ctx context.Context, linksIDs []string, userID string) error {
 	return s.storage.Delete(ctx, linksIDs, userID)
 }
+
+// GetStats возвращает статистику хранилища: количество URL и количество уникальных пользователей.
+func (s *Shortener) GetStats(ctx context.Context) (int, int, error) {
+	return s.storage.GetStats(ctx)
+}

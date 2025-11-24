@@ -28,4 +28,7 @@ type URLStorage interface {
 	// Delete помечает указанные ссылки как удаленные (soft delete).
 	// Удаление выполняется только для ссылок, принадлежащих указанному пользователю.
 	Delete(ctx context.Context, IDs []string, userID string) error
+
+	// GetStats возвращает статистику хранилища: количество URL и количество уникальных пользователей.
+	GetStats(ctx context.Context) (urls int, users int, err error)
 }
