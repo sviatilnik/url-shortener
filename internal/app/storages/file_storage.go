@@ -326,3 +326,64 @@ func (f *FileStorage) Delete(ctx context.Context, IDs []string, userID string) e
 		return os.Rename(tempFile.Name(), f.filePath)
 	}
 }
+
+func (f *FileStorage) GetStats(ctx context.Context) (int, int, error) {
+	select {
+	case <-ctx.Done():
+		return 0, 0, ctx.Err()
+	default:
+		urlsCount := 0
+		usersSet := make(map[string]bool)
+
+		// Проверяем кэш
+		f.cacheMutex.RLock()
+		for _, link := range f.cache {
+			if !link.IsDeleted {
+				urlsCount++
+				if link.UserID != "" {
+					usersSet[link.UserID] = true
+				}
+			}
+		}
+		f.cacheMutex.RUnlock()
+
+		// Если файл не существует, возвращаем статистику из кэша
+		file, err := os.Open(f.filePath)
+		if err != nil {
+			return urlsCount, len(usersSet), nil
+		}
+		defer file.Close()
+
+		// Сканируем файл для поиска ссылок, которых нет в кэше
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			row := scanner.Text()
+			row = strings.Trim(row, "\n")
+
+			item := &storeItem{}
+			err = json.Unmarshal([]byte(row), item)
+			if err != nil {
+				continue // Пропускаем некорректные записи
+			}
+
+			// Проверяем, есть ли уже в кэше
+			f.cacheMutex.RLock()
+			_, exists := f.cache[item.Short]
+			f.cacheMutex.RUnlock()
+
+			if !exists && !item.IsDeleted {
+				urlsCount++
+				if item.UserID != "" {
+					usersSet[item.UserID] = true
+				}
+			}
+		}
+
+		err = scanner.Err()
+		if err != nil {
+			return 0, 0, err
+		}
+
+		return urlsCount, len(usersSet), nil
+	}
+}

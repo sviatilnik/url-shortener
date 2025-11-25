@@ -161,3 +161,27 @@ func (i *InMemoryStorage) Delete(ctx context.Context, IDs []string, userID strin
 		return nil
 	}
 }
+
+func (i *InMemoryStorage) GetStats(ctx context.Context) (int, int, error) {
+	select {
+	case <-ctx.Done():
+		return 0, 0, ctx.Err()
+	default:
+		i.mu.RLock()
+		defer i.mu.RUnlock()
+
+		urlsCount := 0
+		usersSet := make(map[string]bool)
+
+		for _, link := range i.store {
+			if !link.IsDeleted {
+				urlsCount++
+				if link.UserID != "" {
+					usersSet[link.UserID] = true
+				}
+			}
+		}
+
+		return urlsCount, len(usersSet), nil
+	}
+}

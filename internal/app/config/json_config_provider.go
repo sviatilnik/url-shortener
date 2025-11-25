@@ -37,6 +37,7 @@ func (j *JSONConfigProvider) setValues(c *Config) error {
 
 	var jsonConfig struct {
 		Host            string `json:"server_address"`
+		GRPCAddress     string `json:"grpc_server_address"`
 		ShortURLHost    string `json:"base_url"`
 		FileStoragePath string `json:"file_storage_path"`
 		DatabaseDSN     string `json:"database_dsn"`
@@ -44,6 +45,7 @@ func (j *JSONConfigProvider) setValues(c *Config) error {
 		AuditFile       string `json:"audit_file"`
 		AuditURL        string `json:"audit_url"`
 		EnabledHTTPS    bool   `json:"enable_https"`
+		TrustedSubnet   string `json:"trusted_subnet"`
 	}
 
 	if err := json.Unmarshal(data, &jsonConfig); err != nil {
@@ -52,6 +54,10 @@ func (j *JSONConfigProvider) setValues(c *Config) error {
 
 	if strings.TrimSpace(jsonConfig.Host) != "" {
 		c.Host = jsonConfig.Host
+	}
+
+	if strings.TrimSpace(jsonConfig.GRPCAddress) != "" {
+		c.GRPCAddress = jsonConfig.GRPCAddress
 	}
 
 	if strings.TrimSpace(jsonConfig.ShortURLHost) != "" {
@@ -80,6 +86,10 @@ func (j *JSONConfigProvider) setValues(c *Config) error {
 
 	if jsonConfig.EnabledHTTPS {
 		c.EnabledHTTPS = jsonConfig.EnabledHTTPS
+	}
+
+	if strings.TrimSpace(jsonConfig.TrustedSubnet) != "" {
+		c.TrustedSubnet = jsonConfig.TrustedSubnet
 	}
 
 	return nil

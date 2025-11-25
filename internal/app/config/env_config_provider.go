@@ -31,6 +31,11 @@ func (env *EnvProvider) setValues(c *Config) error {
 		c.Host = host
 	}
 
+	grpcHost, ok := env.getter.LookupEnv("GRPC_SERVER_ADDRESS")
+	if ok && strings.TrimSpace(grpcHost) != "" {
+		c.GRPCAddress = grpcHost
+	}
+
 	shortURLHost, ok := env.getter.LookupEnv("BASE_URL")
 	if ok && strings.TrimSpace(shortURLHost) != "" {
 		c.ShortURLHost = shortURLHost
@@ -59,6 +64,11 @@ func (env *EnvProvider) setValues(c *Config) error {
 	enabledHTTPS, ok := env.getter.LookupEnv("ENABLE_HTTPS")
 	if ok && strings.TrimSpace(enabledHTTPS) != "" {
 		c.EnabledHTTPS = enabledHTTPS == "true"
+	}
+
+	trustedSubnet, ok := env.getter.LookupEnv("TRUSTED_SUBNET")
+	if ok && strings.TrimSpace(trustedSubnet) != "" {
+		c.TrustedSubnet = trustedSubnet
 	}
 
 	return nil

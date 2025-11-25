@@ -208,3 +208,28 @@ func (p *PostgresStorage) Delete(ctx context.Context, IDs []string, userID strin
 
 	return tx.Commit()
 }
+
+func (p *PostgresStorage) GetStats(ctx context.Context) (int, int, error) {
+	var urlsCount int
+	var usersCount int
+
+	// Подсчитываем количество не удаленных URL
+	err := p.db.QueryRowContext(
+		ctx,
+		`SELECT COUNT(*) FROM `+p.tableName+` WHERE "isDeleted" = false`,
+	).Scan(&urlsCount)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Подсчитываем количество уникальных пользователей (только для не удаленных URL)
+	err = p.db.QueryRowContext(
+		ctx,
+		`SELECT COUNT(DISTINCT "userID") FROM `+p.tableName+` WHERE "isDeleted" = false AND "userID" != ''`,
+	).Scan(&usersCount)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return urlsCount, usersCount, nil
+}
