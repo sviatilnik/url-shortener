@@ -11,6 +11,7 @@ import (
 
 type FlagProvider struct {
 	HostFlagName            string
+	GRPCAddressFlagName     string
 	ShortURLFlagName        string
 	FileStoragePathFlagName string
 	DatabaseDSNFlagName     string
@@ -23,6 +24,7 @@ type FlagProvider struct {
 func NewFlagProvider() *FlagProvider {
 	return &FlagProvider{
 		HostFlagName:            "a",
+		GRPCAddressFlagName:     "g",
 		ShortURLFlagName:        "b",
 		FileStoragePathFlagName: "f",
 		DatabaseDSNFlagName:     "d",
@@ -39,6 +41,11 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 	host := new(string)
 	if name := strings.TrimSpace(flagConf.HostFlagName); name != "" {
 		host = flagSet.String(name, "", "Адрес запуска HTTP-сервера")
+	}
+
+	grpcAddress := new(string)
+	if name := strings.TrimSpace(flagConf.GRPCAddressFlagName); name != "" {
+		grpcAddress = flagSet.String(name, "", "Адрес запуска gRPC-сервера")
 	}
 
 	shortURLHost := new(string)
@@ -82,6 +89,10 @@ func (flagConf *FlagProvider) setValues(c *Config) error {
 
 	if strings.TrimSpace(*host) != "" {
 		c.Host = *host
+	}
+
+	if strings.TrimSpace(*grpcAddress) != "" {
+		c.GRPCAddress = *grpcAddress
 	}
 
 	if strings.TrimSpace(*shortURLHost) != "" && util.IsURL(*shortURLHost) {

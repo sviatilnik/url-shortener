@@ -3,10 +3,11 @@ package config
 // Config представляет конфигурацию приложения.
 // Содержит все необходимые параметры для работы сервиса сокращения URL.
 type Config struct {
-	Host            string `env:"SERVER_ADDRESS"`    // Адрес и порт для запуска HTTP-сервера
-	ShortURLHost    string `env:"BASE_URL"`          // Базовый URL для создания коротких ссылок
-	FileStoragePath string `env:"FILE_STORAGE_PATH"` // Путь к файлу для хранения данных (если используется файловое хранилище)
-	DatabaseDSN     string `env:"DATABASE_DSN"`      // Строка подключения к базе данных
+	Host            string `env:"SERVER_ADDRESS"`      // Адрес и порт для запуска HTTP-сервера
+	GRPCAddress     string `env:"GRPC_SERVER_ADDRESS"` // Адрес и порт для запуска gRPC-сервера
+	ShortURLHost    string `env:"BASE_URL"`            // Базовый URL для создания коротких ссылок
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`   // Путь к файлу для хранения данных (если используется файловое хранилище)
+	DatabaseDSN     string `env:"DATABASE_DSN"`        // Строка подключения к базе данных
 	AuthSecret      string // Секретный ключ для аутентификации
 	AuditFile       string `env:"AUDIT_FILE"`     // Путь к файлу аудита
 	AuditURL        string `env:"AUDIT_URL"`      // URL для отправки аудита

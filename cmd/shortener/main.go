@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,15 +14,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"google.golang.org/grpc"
 
 	"github.com/sviatilnik/url-shortener/internal/app/audit"
 	"github.com/sviatilnik/url-shortener/internal/app/config"
 	"github.com/sviatilnik/url-shortener/internal/app/generators"
+	"github.com/sviatilnik/url-shortener/internal/app/grpcserver"
 	"github.com/sviatilnik/url-shortener/internal/app/handlers"
 	"github.com/sviatilnik/url-shortener/internal/app/logger"
 	"github.com/sviatilnik/url-shortener/internal/app/middlewares"
 	"github.com/sviatilnik/url-shortener/internal/app/shortener"
 	"github.com/sviatilnik/url-shortener/internal/app/storages"
+	pb "github.com/sviatilnik/url-shortener/proto"
 	"go.uber.org/zap"
 )
 
@@ -52,6 +56,9 @@ func main() {
 	shorter := getShortener(conf.ShortURLHost, storage)
 	auditService := getAuditService(&conf, zapLogger)
 
+	var grpcListener net.Listener
+	var grpcServer *grpc.Server
+
 	r := chi.NewRouter()
 	r.Use(middlewares.Log)
 	r.Use(middlewares.Compress)
@@ -76,6 +83,26 @@ func main() {
 	server := &http.Server{
 		Addr:    conf.Host,
 		Handler: r,
+	}
+
+	if conf.GRPCAddress != "" {
+		var err error
+		grpcListener, err = net.Listen("tcp", conf.GRPCAddress)
+		if err != nil {
+			zapLogger.Fatalw("Failed to start gRPC listener", "error", err)
+		}
+
+		grpcServer = grpc.NewServer(
+			grpc.UnaryInterceptor(middlewares.NewGRPCAuthInterceptor(&conf, zapLogger).Unary()),
+		)
+
+		pb.RegisterShortenerServiceServer(grpcServer, grpcserver.NewShortenerServer(shorter, zapLogger))
+
+		go func() {
+			if err := grpcServer.Serve(grpcListener); err != nil && err != grpc.ErrServerStopped {
+				zapLogger.Fatalw("Error starting gRPC server", "error", err)
+			}
+		}()
 	}
 
 	go func() {
@@ -106,6 +133,16 @@ func main() {
 		zapLogger.Errorw("Error shutting down server", "error", err)
 	} else {
 		zapLogger.Info("HTTP server shut down successfully")
+	}
+
+	if grpcServer != nil {
+		grpcServer.GracefulStop()
+		if grpcListener != nil {
+			if err := grpcListener.Close(); err != nil {
+				zapLogger.Errorw("Error closing gRPC listener", "error", err)
+			}
+		}
+		zapLogger.Info("gRPC server shut down successfully")
 	}
 	// Закрываем соединение с базой данных
 	if connection != nil {

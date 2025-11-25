@@ -31,6 +31,11 @@ func (env *EnvProvider) setValues(c *Config) error {
 		c.Host = host
 	}
 
+	grpcHost, ok := env.getter.LookupEnv("GRPC_SERVER_ADDRESS")
+	if ok && strings.TrimSpace(grpcHost) != "" {
+		c.GRPCAddress = grpcHost
+	}
+
 	shortURLHost, ok := env.getter.LookupEnv("BASE_URL")
 	if ok && strings.TrimSpace(shortURLHost) != "" {
 		c.ShortURLHost = shortURLHost

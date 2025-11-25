@@ -17,6 +17,7 @@ func TestConfig(t *testing.T) {
 	os.Args = []string{
 		os.Args[0],
 		"-tta=https://google.com",
+		"-ttg=localhost:9090",
 		"-ttd=database_dsn",
 		"-ttauf=audit-file",
 		"-ttau=audit-url",
@@ -26,6 +27,7 @@ func TestConfig(t *testing.T) {
 		&DefaultProvider{},
 		&FlagProvider{
 			HostFlagName:            "tta",
+			GRPCAddressFlagName:     "ttg",
 			ShortURLFlagName:        "ttb",
 			FileStoragePathFlagName: "ttf",
 			DatabaseDSNFlagName:     "ttd",
@@ -36,6 +38,7 @@ func TestConfig(t *testing.T) {
 	)
 
 	assert.Equal(t, "https://google.com", config.Host)               // from flag provider
+	assert.Equal(t, "localhost:9090", config.GRPCAddress)            // from flag provider
 	assert.Equal(t, "https://short.google.com", config.ShortURLHost) // from env provider
 	assert.Equal(t, "database_dsn", config.DatabaseDSN)              // from flag provider
 	assert.Equal(t, "store", config.FileStoragePath)                 // from default provider

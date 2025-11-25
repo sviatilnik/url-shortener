@@ -9,6 +9,7 @@ type DefaultProvider struct{}
 
 func (d *DefaultProvider) setValues(c *Config) error {
 	c.Host = "localhost:8080"
+	c.GRPCAddress = "localhost:3200"
 	c.ShortURLHost = "http://localhost:8080"
 	c.FileStoragePath = "store"
 	c.DatabaseDSN = ""
